@@ -37,8 +37,12 @@ export const api = {
 
   plannedObjects:()=>httpGet("/planned-objects"),
 
+  // ДОБАВЬ ЭТО
+  objectsList:()=>httpGet("/planned-objects"),
+
   executorPlan:()=>httpGet("/executor-plan"),
 
   saveVisit:(data)=>httpPost("/save-visit",data)
 
 };
+
