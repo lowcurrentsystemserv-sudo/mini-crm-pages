@@ -35,20 +35,22 @@ export async function onRequestPost({ request, env }) {
     }
 
     // ВРЕМЕННАЯ cookie-сессия (потом подпишем)
-    const session = {
-      name: data.name,
-      role: data.role,
-      exp: Date.now() + 12 * 60 * 60 * 1000,
-    };
+const session = {
+  name: data.name,
+  role: data.role,
+  exp: Date.now() + 12 * 60 * 60 * 1000,
+};
 
-    const cookie = `sid=${btoa(JSON.stringify(session))}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 12}`;
+const cookieValue = base64urlFromUtf8(JSON.stringify(session));
+const cookie = `sid=${cookieValue}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 12}`;
 
-    return new Response(JSON.stringify({ ok:true, name:data.name, role:data.role }), {
-      headers: {
-        "Content-Type":"application/json; charset=utf-8",
-        "Set-Cookie": cookie
-      }
-    });
+return new Response(JSON.stringify({ ok:true, name:data.name, role:data.role }), {
+  headers: {
+    "Content-Type":"application/json; charset=utf-8",
+    "Set-Cookie": cookie
+  }
+});
+
   } catch (err) {
     return new Response(JSON.stringify({
       ok: false,
@@ -56,4 +58,11 @@ export async function onRequestPost({ request, env }) {
       where: "pages function /api/login"
     }), { status: 500, headers: { "Content-Type":"application/json; charset=utf-8" }});
   }
+}
+
+function base64urlFromUtf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
