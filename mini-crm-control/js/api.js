@@ -72,9 +72,17 @@ export const api = {
     return r;
   },
 
+  //ускоряем процесс авторизации и подгруз данных
+
+  bootstrap: async () => {
+    const r = await httpGet("/bootstrap");
+    return r;
+  },
+
   // (на всякий случай оставим старые имена, чтобы нигде не упало)
   plannedObjects: async () => (await httpGet("/planned-objects")).items || [],
   executorPlan: async () => (await httpGet("/executor-plan")).rows || [],
   saveVisit: async (data) => httpPost("/save-visit", data),
 };
+
 
