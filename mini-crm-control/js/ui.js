@@ -132,14 +132,17 @@ export async function ensureObjectsLoadedVER1() {
 }
 
 export async function ensureObjectsLoaded() {
+  if (state.objects?.length) return;
 
-  if(state.objects?.length) return;
   const data = await api.bootstrap();
+
   state.objects = data.objects || [];
   state.objectsMap = {};
-  for(const o of state.objects){
+
+  for (const o of state.objects) {
     state.objectsMap[o.objectId] = o;
   }
+
   state.plan = data.plan || [];
 }
 
@@ -858,4 +861,5 @@ function currentMonthISO(){
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
 
 }
+
 
