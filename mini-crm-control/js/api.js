@@ -76,7 +76,18 @@ export const api = {
 
   bootstrap: async () => {
     const r = await httpGet("/bootstrap");
-    return r;
+  
+    const objects = Array.isArray(r.objects)
+      ? r.objects.map(mapPlannedItemToObject)
+      : [];
+  
+    const plan = Array.isArray(r.plan) ? r.plan : [];
+  
+    return {
+      ok: !!r.ok,
+      objects,
+      plan
+    };
   },
 
   // (на всякий случай оставим старые имена, чтобы нигде не упало)
@@ -84,5 +95,6 @@ export const api = {
   executorPlan: async () => (await httpGet("/executor-plan")).rows || [],
   saveVisit: async (data) => httpPost("/save-visit", data),
 };
+
 
 
