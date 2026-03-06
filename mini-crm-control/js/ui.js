@@ -123,12 +123,24 @@ export function bindGlobalUI() {
   });
 }
 
-export async function ensureObjectsLoaded() {
+export async function ensureObjectsLoadedVER1() {
   if (state.objects?.length) return;
   const res = await api.objectsList();
   state.objects = res.objects || [];
   state.objectsMap = {};
   for (const o of state.objects) state.objectsMap[o.objectId] = o;
+}
+
+export async function ensureObjectsLoaded() {
+
+  if(state.objects?.length) return;
+  const data = await api.bootstrap();
+  state.objects = data.objects || [];
+  state.objectsMap = {};
+  for(const o of state.objects){
+    state.objectsMap[o.objectId] = o;
+  }
+  state.plan = data.plan || [];
 }
 
 function hideAllViews() {
@@ -846,3 +858,4 @@ function currentMonthISO(){
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
 
 }
+
