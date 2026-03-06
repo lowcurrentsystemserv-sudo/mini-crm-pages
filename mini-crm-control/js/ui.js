@@ -256,7 +256,17 @@ export async function openMasterVisit() {
         els.objectSearch.value = div.textContent;
         els.searchResults.innerHTML = "";
         els.dispatcherNote.style.display = "block";
-        els.dispatcherNote.textContent = `Система: ${o.system} • Категория: ${o.category} • Группа: ${o.group}`;
+        
+        els.dispatcherNote.innerHTML = `
+        <b>Система:</b> ${o.system || "-"} • 
+        <b>Категория:</b> ${o.category || "-"} • 
+        <b>Группа:</b> ${o.group || "-"}
+        
+        <br><br>
+        
+        <b>Описание диспетчера:</b><br>
+        ${o.description || "Описание отсутствует"}
+        `;
       });
       els.searchResults.appendChild(div);
     }
@@ -834,4 +844,5 @@ function dateOnly(d){
 function currentMonthISO(){
   const dt = new Date();
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
+
 }
