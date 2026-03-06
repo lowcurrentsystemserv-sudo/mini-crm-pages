@@ -310,6 +310,14 @@ tr:hover td{ background: rgba(0,0,0,0.04); }
   box-shadow: var(--shadow);
   padding: 14px;
 }
+.note{
+  margin-top:10px;
+  padding:10px;
+  background:#f5f6fa;
+  border-left:4px solid #2e86de;
+  border-radius:6px;
+  font-size:14px;
+}
 .modal-body{ margin-top: 10px; }
 
 /* Mobile */
@@ -318,4 +326,5 @@ tr:hover td{ background: rgba(0,0,0,0.04); }
   .sidebar{ position: static; max-height: none; }
   .grid{ grid-template-columns: 1fr; }
   .filters{ grid-template-columns: 1fr; }
+
 }
