@@ -25,18 +25,18 @@ async function httpPost(path, body) {
 }
 
 function mapPlannedItemToObject(o) {
-  // o из /api/planned-objects: {id,name,city,address,description}
+  // o из /api/planned-objects: {id,name,system,city,address,category,group,description}
+
   return {
     objectId: String(o.id ?? ""),     // UI ждёт objectId
     name: o.name ?? "",
+    system: o.system ?? "",
     city: o.city ?? "",
     address: o.address ?? "",
-    // поля, которые UI использует в поиске/подсказке:
-    system: "",       // пока пусто (в planned-objects нет)
-    category: "",
-    group: "",
-    active: true,
-    description: o.description ?? "",
+    category: o.category ?? "",
+    group: o.group ?? "",
+    active: o.active !== "Архив" && o.active !== "Нет",
+    description: o.description ?? ""
   };
 }
 
@@ -77,3 +77,4 @@ export const api = {
   executorPlan: async () => (await httpGet("/executor-plan")).rows || [],
   saveVisit: async (data) => httpPost("/save-visit", data),
 };
+
