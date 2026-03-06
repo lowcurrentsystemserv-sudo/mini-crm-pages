@@ -34,6 +34,15 @@ export async function onRequestGet({ request, env }) {
     });
   }
 
+  const cache = caches.default;
+  const cacheKey = new Request(request.url);
+  
+  let response = await cache.match(cacheKey);
+  
+  if(response){
+    return response;
+  }
+
   const r = await fetch(env.GAS_URL, {
     method: "POST",
     headers: { "Content-Type":"application/x-www-form-urlencoded;charset=UTF-8" },
@@ -42,6 +51,17 @@ export async function onRequestGet({ request, env }) {
       userName: session.name
     })
   });
+
+  response = new Response(text,{
+    headers:{
+      "Content-Type":"application/json",
+      "Cache-Control":"public, max-age=30"
+    }
+  });
+
+  context.waitUntil(cache.put(cacheKey, response.clone()));
+  
+  return response;
 
   const text = await r.text();
   return new Response(text, {
