@@ -123,27 +123,42 @@ export function bindGlobalUI() {
   });
 }
 
-export async function ensureObjectsLoadedVER1() {
-  if (state.objects?.length) return;
-  const res = await api.objectsList();
-  state.objects = res.objects || [];
-  state.objectsMap = {};
-  for (const o of state.objects) state.objectsMap[o.objectId] = o;
-}
-
 export async function ensureObjectsLoaded() {
   if (state.objects?.length) return;
 
-  const data = await api.bootstrap();
+  let data = { objects: [], plan: [] };
 
-  state.objects = data.objects || [];
+  try {
+    data = await api.bootstrap();
+  } catch (e) {
+    console.warn("bootstrap failed, fallback to objectsList()", e);
+  }
+
+  let objects = Array.isArray(data.objects) ? data.objects : [];
+
+  if (!objects.length) {
+    const res = await api.objectsList();
+    objects = res.objects || [];
+  }
+
+  state.objects = objects.map(o => ({
+    objectId: String(o.objectId ?? o.id ?? ""),
+    name: o.name ?? "",
+    system: o.system ?? "",
+    city: o.city ?? "",
+    address: o.address ?? "",
+    category: o.category ?? "",
+    group: o.group ?? "",
+    active: o.active !== false && o.active !== "Архив" && o.active !== "Нет",
+    description: o.description ?? ""
+  }));
+
   state.objectsMap = {};
-
   for (const o of state.objects) {
     state.objectsMap[o.objectId] = o;
   }
 
-  state.plan = data.plan || [];
+  state.plan = Array.isArray(data.plan) ? data.plan : [];
 }
 
 function hideAllViews() {
@@ -861,5 +876,6 @@ function currentMonthISO(){
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
 
 }
+
 
 
