@@ -1,7 +1,9 @@
 import { json, callGas } from "./_lib.js";
 import { requireSession } from "./_session.js";
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(context) {
+  const { request, env } = context;
+
   const s = await requireSession(request, env);
   if (!s.ok) return json({ ok: false, error: s.error }, 401);
 
