@@ -41,6 +41,7 @@ function mapPlannedItemToObject(o) {
 }
 
 export const api = {
+ 
   // Auth
   login: (data) => httpPost("/login", data),
   me: () => httpGet("/me"),
@@ -72,6 +73,10 @@ export const api = {
     return r;
   },
 
+  executorSummary: () => httpGet("/executor-summary"),
+
+  suggestWorkType: (objectId) => httpPost("/suggest-work-type", { objectId }),
+
   //ускоряем процесс авторизации и подгруз данных
 
   bootstrap: async () => {
@@ -95,6 +100,9 @@ export const api = {
   executorPlan: async () => (await httpGet("/executor-plan")).rows || [],
   saveVisit: async (data) => httpPost("/save-visit", data),
 };
+
+
+
 
 
 
