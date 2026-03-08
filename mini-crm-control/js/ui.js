@@ -222,7 +222,9 @@ export function buildNav() {
 }
 
 export async function openDashboard() {
+  
   openView("dashboard", "Панель", "Главный экран системы.");
+  renderQuickActions();
 
   const role = state.user?.role;
   const summaryEl = document.getElementById("summaryText");
@@ -250,7 +252,6 @@ export async function openDashboard() {
   } else {
     summaryEl.textContent = "Сводка для этой роли будет добавлена позже.";
   }
-  renderQuickActions();
 }
 
 function renderQuickActions() {
@@ -903,6 +904,7 @@ function currentMonthISO(){
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
 
 }
+
 
 
 
