@@ -53,7 +53,7 @@ btnLogin.addEventListener("click", async () => {
 btnDemo.addEventListener("click", async () => {
   clearError();
   try {
-    if (!CONFIG.USE_MOCK) throw new Error("Демо доступно только в MOCK режиме");
+    if (!CONFIG.USE_MOCK) throw new Error("Эта функция пока не доступна и пока еще находиться в разработке!");
     const roles = ["master", "dispatcher", "stat", "admin"];
     const last = localStorage.getItem("mcc_demo_role") || "master";
     const next = roles[(roles.indexOf(last) + 1) % roles.length];
@@ -88,5 +88,6 @@ document.addEventListener("keydown", (e) => {
   const loginVisible = document.getElementById("screen-login").style.display !== "none";
   if (e.key === "Enter" && loginVisible) btnLogin.click();
 });
+
 
 boot();
