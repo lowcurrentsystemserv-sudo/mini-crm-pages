@@ -221,8 +221,35 @@ export function buildNav() {
   if (first) first.click();
 }
 
-export function openDashboard() {
-  openView("dashboard", "Панель", "Быстрые действия для вашей роли.");
+export async function openDashboard() {
+  openView("dashboard", "Панель", "Главный экран системы.");
+
+  const role = state.user?.role;
+  const summaryEl = document.getElementById("summaryText");
+
+  if (!summaryEl) return;
+
+  if (role === "master") {
+    summaryEl.textContent = "Загрузка сводки...";
+
+    try {
+      const res = await api.executorSummary();
+      const s = res.summary || {};
+
+      summaryEl.innerHTML = `
+        Активных заданий: <b>${s.totalActive || 0}</b><br>
+        Плановых: <b>${s.plannedCount || 0}</b><br>
+        По заявкам: <b>${s.requestCount || 0}</b><br>
+        Первичных: <b>${s.primaryCount || 0}</b><br>
+        Выполнено сегодня: <b>${s.doneToday || 0}</b>
+      `;
+    } catch (e) {
+      summaryEl.textContent = "Не удалось загрузить сводку.";
+      console.error("executor summary error:", e);
+    }
+  } else {
+    summaryEl.textContent = "Сводка для этой роли будет добавлена позже.";
+  }
   renderQuickActions();
 }
 
@@ -876,6 +903,7 @@ function currentMonthISO(){
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
 
 }
+
 
 
 
