@@ -29,7 +29,7 @@
       <section id="screen-login" class="screen">
         <div class="card">
           <h1 class="h1">Вход</h1>
-          <p class="muted">В MOCK режиме можно посмотреть все роли. Потом подключим Apps Script API.</p>
+          
 
           <label class="label">Логин</label>
           <input id="loginInput" class="input" placeholder="Логин" autocomplete="username" />
@@ -39,17 +39,12 @@
 
           <div class="row gap">
             <button id="btnLogin" class="btn btn-primary" type="button">Войти</button>
-            <button id="btnDemo" class="btn btn-secondary" type="button">Демо (смена роли)</button>
+            <button id="btnDemo" class="btn btn-secondary" type="button">Регистрация</button>
           </div>
 
           <div id="loginError" class="alert alert-danger" style="display:none;"></div>
 
-          <details class="details">
-            <summary>Как подключить API позже</summary>
-            <div class="muted">
-              Вставишь URL Web App в <code>js/config.js</code> и поставишь <code>USE_MOCK: false</code>.
-            </div>
-          </details>
+
         </div>
       </section>
 
@@ -253,6 +248,7 @@
 </body>
 
 </html>
+
 
 
 
