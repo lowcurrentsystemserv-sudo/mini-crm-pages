@@ -30,11 +30,35 @@ export function clearSession() {
   localStorage.removeItem(LS_USER);
 }
 
+import { showAppLoader, hideAppLoader } from "./ui.js";
+
 export async function loginWithCredentials(login, password, roleOverride) {
-  const res = await api.login({ login, password, role: roleOverride });
-  if (!res?.ok && res?.status !== "success") throw new Error(res?.error || "Неверный логин/пароль");
-  state.token = true;
-  state.user = { name: res.name, role: res.role };
-  saveSession();
-  return state.user;
+
+  try {
+
+    showAppLoader("Авторизация...");
+
+    const res = await api.login({ login, password, role: roleOverride });
+
+    if (!res?.ok && res?.status !== "success") {
+      throw new Error(res?.error || "Неверный логин/пароль");
+    }
+
+    state.token = true;
+
+    state.user = {
+      name: res.name,
+      role: res.role
+    };
+
+    saveSession();
+
+    return state.user;
+
+  } finally {
+
+    hideAppLoader();
+
+  }
+
 }
