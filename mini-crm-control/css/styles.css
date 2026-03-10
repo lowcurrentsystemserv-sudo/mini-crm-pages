@@ -129,14 +129,17 @@ body[data-viewport="desktop-wide"]{
   left: 14px;
   bottom: 14px;
   width: min(320px, calc(100vw - 28px));
-  max-height: none;
-  overflow:auto;
+  overflow: auto;
   z-index: 40;
   transform: translateX(-120%);
   transition: transform .22s ease;
   backdrop-filter: blur(10px);
 }
-.sidebar.open{ transform: translateX(0); }
+
+.sidebar.open{
+  transform: translateX(0);
+}
+
 .sidebar-backdrop{
   position: fixed;
   inset: 0;
@@ -146,7 +149,11 @@ body[data-viewport="desktop-wide"]{
   transition: opacity .2s ease;
   z-index: 39;
 }
-.sidebar-backdrop.show{ opacity: 1; pointer-events: auto; }
+
+.sidebar-backdrop.show{
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .userbox{
   display:flex; gap:12px; align-items:center;
@@ -429,7 +436,6 @@ tr:hover td{ background: rgba(0,0,0,0.04); }
 
 @media (max-width: 980px){
   .layout{ grid-template-columns: 1fr; }
-  .sidebar{ position: static; max-height: none; }
   .grid{ grid-template-columns: 1fr; }
   .filters{ grid-template-columns: 1fr; }
   #screen-login,
