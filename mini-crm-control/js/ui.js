@@ -11,6 +11,7 @@ const screens = {
 const els = {
   btnLogout: document.getElementById("btnLogout"),
   btnTheme: document.getElementById("btnTheme"),
+  btnMenu: document.getElementById("btnMenu"),
   loginError: document.getElementById("loginError"),
 
   userName: document.getElementById("userName"),
@@ -18,6 +19,8 @@ const els = {
   userAvatar: document.getElementById("userAvatar"),
   nav: document.getElementById("nav"),
   apiStatus: document.getElementById("apiStatus"),
+  appSidebar: document.getElementById("appSidebar"),
+  sidebarBackdrop: document.getElementById("sidebarBackdrop"),
 
   contentTitle: document.getElementById("contentTitle"),
   contentHint: document.getElementById("contentHint"),
@@ -71,9 +74,12 @@ export function setApiStatus() {
 }
 
 export function showScreen(name) {
+  const isApp = name === "app";
   screens.login.style.display = name === "login" ? "block" : "none";
-  screens.app.style.display = name === "app" ? "block" : "none";
-  els.btnLogout.style.display = name === "app" ? "inline-flex" : "none";
+  screens.app.style.display = isApp ? "block" : "none";
+  els.btnLogout.style.display = isApp ? "inline-flex" : "none";
+  if (els.btnMenu) els.btnMenu.style.display = isApp ? "inline-flex" : "none";
+  if (!isApp) closeSidebar();
 }
 
 export function toast(msg) {
@@ -97,6 +103,24 @@ export function setUserUI() {
   els.userName.textContent = u?.name || "—";
   els.userRole.textContent = u?.role || "—";
   els.userAvatar.textContent = (u?.name?.trim()?.[0] || "U").toUpperCase();
+}
+
+function openSidebar() {
+  els.appSidebar?.classList.add("open");
+  els.sidebarBackdrop?.classList.add("show");
+  document.body.classList.add("sidebar-open");
+}
+
+function closeSidebar() {
+  els.appSidebar?.classList.remove("open");
+  els.sidebarBackdrop?.classList.remove("show");
+  document.body.classList.remove("sidebar-open");
+}
+
+function toggleSidebar() {
+  const opened = els.appSidebar?.classList.contains("open");
+  if (opened) closeSidebar();
+  else openSidebar();
 }
 
 export function bindGlobalUI() {
@@ -215,6 +239,7 @@ export function buildNav() {
     b.addEventListener("click", () => {
       [...els.nav.querySelectorAll(".navbtn")].forEach(x => x.classList.remove("active"));
       b.classList.add("active");
+      closeSidebar();
       it.onClick();
     });
     els.nav.appendChild(b);
@@ -612,7 +637,7 @@ function renderPlanTable(rows, { allowEditStatus }) {
   if (!filteredRows.length) return `<div class="muted" style="padding:12px;">Нет данных</div>`;
 
   if (!allowEditStatus) {
-    const tr = filteredRows.map(x => {
+    const cards = filteredRows.map(x => {
       const objectTitle = x.object || x.objectName || x.objectId || "—";
       const objectMeta = [x.city, x.address].filter(Boolean).join(", ");
       const system = x.system || "—";
@@ -620,32 +645,19 @@ function renderPlanTable(rows, { allowEditStatus }) {
       const workType = x.workType || x.type || "—";
       const comment = (x.description || "").trim();
 
-      return `<tr>
-        <td class="col-object">
-          <div class="plan-object-title">${esc(objectTitle)}</div>
-          <span class="plan-object-meta">${esc(objectMeta || "Адрес не указан")}</span>
-        </td>
-        <td>${esc(system)}</td>
-        <td>${esc(planDate)}</td>
-        <td><span class="badge-soft">${esc(workType)}</span></td>
-        <td class="col-comment">${comment ? `<div class="plan-comment">${esc(comment)}</div>` : `<span class="plan-empty">—</span>`}</td>
-      </tr>`;
+      return `
+        <article class="master-plan-card">
+          <div class="master-plan-title">${esc(objectTitle)}</div>
+          <div class="master-plan-subtitle">${esc(objectMeta || "Населённый пункт и адрес не указаны")}</div>
+          <div class="master-plan-line"><span class="master-plan-label">Тип системы:</span> <span>${esc(system)}</span></div>
+          <div class="master-plan-line"><span class="master-plan-label">Дата планирования:</span> <span>${esc(planDate || "—")}</span></div>
+          <div class="master-plan-line"><span class="master-plan-label">Тип работ:</span> <span>${esc(workType)}</span></div>
+          <div class="master-plan-line master-plan-comment"><span class="master-plan-label">Комментарий диспетчера:</span> <span>${esc(comment || "—")}</span></div>
+        </article>
+      `;
     }).join("");
 
-    return `
-      <table class="plan-master-table table-compact">
-        <thead>
-          <tr>
-            <th style="width:32%;">Объект</th>
-            <th style="width:16%;">Тип системы</th>
-            <th style="width:16%;">Дата планирования</th>
-            <th style="width:16%;">Тип работ</th>
-            <th style="width:20%;">Комментарий диспетчера</th>
-          </tr>
-        </thead>
-        <tbody>${tr}</tbody>
-      </table>
-    `;
+    return `<div class="master-plan-list">${cards}</div>`;
   }
 
   const tr = filteredRows.map(x => {
