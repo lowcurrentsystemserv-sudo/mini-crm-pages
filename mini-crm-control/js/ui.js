@@ -11,6 +11,7 @@ const screens = {
 const els = {
   btnLogout: document.getElementById("btnLogout"),
   btnTheme: document.getElementById("btnTheme"),
+  btnMenu: document.getElementById("btnMenu"),
   loginError: document.getElementById("loginError"),
 
   userName: document.getElementById("userName"),
@@ -18,6 +19,8 @@ const els = {
   userAvatar: document.getElementById("userAvatar"),
   nav: document.getElementById("nav"),
   apiStatus: document.getElementById("apiStatus"),
+  appSidebar: document.getElementById("appSidebar"),
+  sidebarBackdrop: document.getElementById("sidebarBackdrop"),
 
   contentTitle: document.getElementById("contentTitle"),
   contentHint: document.getElementById("contentHint"),
@@ -71,9 +74,12 @@ export function setApiStatus() {
 }
 
 export function showScreen(name) {
+  const isApp = name === "app";
   screens.login.style.display = name === "login" ? "block" : "none";
-  screens.app.style.display = name === "app" ? "block" : "none";
-  els.btnLogout.style.display = name === "app" ? "inline-flex" : "none";
+  screens.app.style.display = isApp ? "block" : "none";
+  els.btnLogout.style.display = isApp ? "inline-flex" : "none";
+  els.btnMenu.style.display = isApp ? "inline-flex" : "none";
+  if (!isApp) closeSidebar();
 }
 
 export function toast(msg) {
@@ -99,6 +105,24 @@ export function setUserUI() {
   els.userAvatar.textContent = (u?.name?.trim()?.[0] || "U").toUpperCase();
 }
 
+function openSidebar() {
+  els.appSidebar?.classList.add("open");
+  els.sidebarBackdrop?.classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSidebar() {
+  els.appSidebar?.classList.remove("open");
+  els.sidebarBackdrop?.classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+function toggleSidebar() {
+  const opened = els.appSidebar?.classList.contains("open");
+  if (opened) closeSidebar();
+  else openSidebar();
+}
+
 export function bindGlobalUI() {
   els.btnLogout.addEventListener("click", () => {
     clearSession();
@@ -114,6 +138,10 @@ export function bindGlobalUI() {
   const savedTheme = localStorage.getItem("mcc_theme");
   if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
   else document.documentElement.setAttribute("data-theme", "dark");
+
+  els.btnMenu?.addEventListener("click", toggleSidebar);
+  els.sidebarBackdrop?.addEventListener("click", closeSidebar);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSidebar(); });
 
   // modal close
   els.modalClose.addEventListener("click", closeModal);
@@ -212,6 +240,7 @@ export function buildNav() {
     b.addEventListener("click", () => {
       [...els.nav.querySelectorAll(".navbtn")].forEach(x => x.classList.remove("active"));
       b.classList.add("active");
+      closeSidebar();
       it.onClick();
     });
     els.nav.appendChild(b);
@@ -593,18 +622,29 @@ function renderPlanTable(rows, { allowEditStatus }) {
   const r = Array.isArray(rows) ? rows : [];
   if (!r.length) return `<div class="muted" style="padding:12px;">Нет данных</div>`;
 
+  const statusClass = (status) => {
+    const s = String(status || "").toLowerCase();
+    if (s.includes("выполн")) return "is-done";
+    if (s.includes("заплан")) return "is-plan";
+    if (s.includes("ожида")) return "is-wait";
+    return "";
+  };
+
   const tr = r.map(x => {
     const obj = state.objectsMap[x.objectId];
-    const objLabel = obj ? `${obj.name} — ${obj.city}, ${obj.address}` : (x.objectName || x.objectId);
+    const objectHtml = obj
+      ? `<div class="table-object"><span class="table-object__name">${esc(obj.name || x.objectName || x.objectId || "")}</span><span class="table-object__meta">${esc([obj.city, obj.address].filter(Boolean).join(", "))}</span></div>`
+      : `<div class="table-object"><span class="table-object__name">${esc(x.objectName || x.objectId || "")}</span></div>`;
+
     return `<tr>
       <td>${esc(x.planId || "")}</td>
-      <td>${esc(x.planDate || "")}</td>
-      <td>${esc(objLabel)}</td>
+      <td class="cell-date">${esc(x.planDate || "")}</td>
+      <td>${objectHtml}</td>
       <td>${esc(x.executor || "")}</td>
-      <td>${esc(x.status || "")}</td>
-      <td>${esc(x.doneDate || "")}</td>
-      <td>${esc(x.executorNote || "")}</td>
-      <td>
+      <td><span class="status-pill ${statusClass(x.status)}">${esc(x.status || "")}</span></td>
+      ${allowEditStatus ? `<td class="cell-date">${esc(x.doneDate || "")}</td>` : ""}
+      <td class="cell-note">${esc(x.executorNote || "")}</td>
+      <td class="cell-actions">
         ${allowEditStatus ? `<button class="btn btn-secondary" data-action="edit" data-id="${escAttr(x.planId)}">Редактировать</button>` : ""}
         ${allowEditStatus ? `<button class="btn" data-action="del" data-id="${escAttr(x.planId)}">Удалить</button>` : ""}
       </td>
@@ -615,23 +655,24 @@ function renderPlanTable(rows, { allowEditStatus }) {
     <table>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Дата планирования</th>
+          <th style="width:72px;">ID</th>
+          <th style="width:128px;">Дата планирования</th>
           <th>Объект</th>
-          <th>Исполнитель</th>
-          <th>Статус</th>
-          <th>Дата выполнения</th>
-          <th>Описание от исполнителя</th>
-          <th>Действия</th>
+          <th style="width:160px;">Исполнитель</th>
+          <th style="width:130px;">Статус</th>
+          ${allowEditStatus ? `<th style="width:128px;">Дата выполнения</th>` : ""}
+          <th style="width:240px;">Комментарий</th>
+          <th style="width:190px;">Действия</th>
         </tr>
       </thead>
       <tbody>${tr}</tbody>
     </table>
   `;
 
+  const root = allowEditStatus ? els.planTable : els.myVisitsTable;
+
   if (allowEditStatus) {
     setTimeout(() => {
-      const root = els.planTable;
       root.querySelectorAll("button[data-action]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
