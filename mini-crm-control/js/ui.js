@@ -180,15 +180,15 @@ export function buildNav() {
   if (role === "master") {
     items.push(
       { label: "Зафиксировать визит", onClick: () => openMasterVisit() },
-      { label: "Мой план (Visit_plan)", onClick: () => openMasterMyVisits() },
+      { label: "Мой план", onClick: () => openMasterMyVisits() },
     );
   }
 
   if (role === "dispatcher") {
     items.push(
-      { label: "Заявки (Requests)", onClick: () => openDispatcherRequests() },
+      { label: "Заявки", onClick: () => openDispatcherRequests() },
       { label: "К планированию", onClick: () => openDispatcherCandidates() },
-      { label: "План визитов (Visit_plan)", onClick: () => openDispatcherPlan() },
+      { label: "План визитов", onClick: () => openDispatcherPlan() },
     );
   }
 
@@ -339,13 +339,13 @@ export async function submitVisit() {
     executor: state.user?.name || "",
     comment: els.visitComment.value || "",
   });
-  toast("Визит записан в Visits_log");
+  toast("Визит записан в базу данных!");
   openDashboard();
 }
 
 export async function openMasterMyVisits() {
   await ensureObjectsLoaded();
-  openView("masterMyVisits", "Мой план (Visit_plan)", "План визитов по вашему исполнителю.");
+  openView("masterMyVisits", "Мой план", "План визитов по вашему исполнителю.");
 
   const res = await api.planList({ executor: state.user?.name || "" });
   const rows = res.rows || [];
@@ -904,6 +904,7 @@ function currentMonthISO(){
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
 
 }
+
 
 
 
