@@ -20,6 +20,7 @@
       </div>
 
       <div class="topbar-actions">
+        <button id="btnMenu" class="btn btn-ghost" type="button" title="Меню" style="display:none;">☰</button>
         <button id="btnTheme" class="btn btn-ghost" type="button" title="Тема">🌗</button>
         <button id="btnLogout" class="btn btn-ghost" type="button" style="display:none;">Выйти</button>
       </div>
@@ -53,7 +54,8 @@
       <!-- APP -->
       <section id="screen-app" class="screen" style="display:none;">
         <div class="layout">
-          <aside class="sidebar">
+          <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+          <aside id="appSidebar" class="sidebar">
             <div class="userbox">
               <div class="avatar" id="userAvatar">U</div>
               <div class="userbox-text">
