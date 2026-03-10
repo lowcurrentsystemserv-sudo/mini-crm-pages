@@ -68,6 +68,24 @@ const views = {
   adminUsers: document.getElementById("view-admin-users"),
 };
 
+export function showAppLoader(text = "Загрузка...") {
+  const loader = document.getElementById("appLoader");
+  const loaderText = document.getElementById("appLoaderText");
+  if (!loader) return;
+
+  if (loaderText) loaderText.textContent = text;
+  loader.classList.remove("hidden");
+  document.body.classList.add("loading");
+}
+
+export function hideAppLoader() {
+  const loader = document.getElementById("appLoader");
+  if (!loader) return;
+
+  loader.classList.add("hidden");
+  document.body.classList.remove("loading");
+}
+
 export function setApiStatus() {
   const s = CONFIG.USE_MOCK ? "MOCK" : (CONFIG.API_BASE_URL ? "LIVE" : "OFF");
   els.apiStatus.textContent = `API: ${s}`;
