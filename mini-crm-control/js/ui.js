@@ -135,6 +135,18 @@ export function bindGlobalUI() {
     localStorage.setItem("mcc_theme", document.documentElement.getAttribute("data-theme"));
   });
 
+  if (els.btnMenu) {
+    els.btnMenu.addEventListener("click", toggleSidebar);
+  }
+
+  if (els.sidebarBackdrop) {
+    els.sidebarBackdrop.addEventListener("click", closeSidebar);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeSidebar();
+  });
+
   const savedTheme = localStorage.getItem("mcc_theme");
   if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
   else document.documentElement.setAttribute("data-theme", "dark");
@@ -142,7 +154,6 @@ export function bindGlobalUI() {
   applyResponsiveLayout();
   window.addEventListener("resize", debounce(applyResponsiveLayout, 120));
 
-  // modal close
   els.modalClose.addEventListener("click", closeModal);
   els.modalCancel.addEventListener("click", closeModal);
   els.modalOverlay.addEventListener("click", (e) => {
