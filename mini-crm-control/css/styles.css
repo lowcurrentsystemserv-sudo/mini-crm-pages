@@ -466,7 +466,7 @@ td, th{ word-break: break-word; overflow-wrap: anywhere; }
 
 .master-plan-list{ display:flex; flex-direction:column; gap:12px; }
 .master-plan-card{ border:1px solid var(--stroke); border-radius:14px; background: var(--surface-1, rgba(255,255,255,0.04)); padding:14px; }
-.master-plan-title{ font-weight:700; font-size:15px; line-height:1.4; }
+.master-plan-title{ font-weight:700; font-size:17px; line-height:1.4; }
 .master-plan-subtitle{ margin-top:6px; color: var(--muted); font-size:13px; line-height:1.45; }
 .master-plan-line{ margin-top:10px; display:block; line-height:1.5; }
 .master-plan-label{ font-weight:700; }
