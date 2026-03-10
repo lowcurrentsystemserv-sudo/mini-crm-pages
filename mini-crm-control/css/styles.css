@@ -430,6 +430,67 @@ tr:hover td{ background: rgba(0,0,0,0.04); }
 }
 .modal-body{ margin-top: 10px; }
 
+.app-loader{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-loader.hidden{
+  display: none;
+}
+
+.app-loader__backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.app-loader__box{
+  position: relative;
+  z-index: 1;
+  min-width: 220px;
+  max-width: 90vw;
+  padding: 20px 24px;
+  border-radius: 18px;
+  background: var(--panel, #1e293b);
+  border: 1px solid var(--stroke, rgba(255,255,255,.08));
+  box-shadow: 0 20px 60px rgba(0,0,0,.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-loader__spinner{
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,.18);
+  border-top-color: var(--accent, #3b82f6);
+  animation: appLoaderSpin .9s linear infinite;
+}
+
+.app-loader__text{
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text, #fff);
+  font-weight: 600;
+}
+
+@keyframes appLoaderSpin{
+  to { transform: rotate(360deg); }
+}
+
+body.loading{
+  overflow: hidden;
+}
+
 @media (max-width: 1200px){
   #screen-app{ width: min(1040px, 100%); }
 }
