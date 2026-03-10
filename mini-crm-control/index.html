@@ -12,11 +12,8 @@
 
     <header class="topbar">
       <div class="brand">
-        <div class="topbar-actions">
-          <button id="btnMenu" class="btn btn-ghost" type="button" title="Меню" style="display:none;">☰</button>
-          </div>
-          <div class="logo">ALS</div>
-          <div class="brand-text">
+        <div class="logo">ALS</div>
+        <div class="brand-text">
           <div class="brand-title">Mini-CRM</div>
           <div class="brand-subtitle">Контроль визитов и заявок</div>
         </div>
@@ -30,7 +27,7 @@
 
     <main class="main">
       <!-- LOGIN -->
-      <section id="screen-login" class="screen">
+      <section id="screen-login" class="screen login-screen">
         <div class="card">
           <h1 class="h1">Вход</h1>
           
@@ -42,7 +39,7 @@
           <input id="passwordInput" class="input" type="password" placeholder="Пароль" autocomplete="current-password" />
           
 
-          <div class="row gap">
+          <div class="row gap wrap">
             <button id="btnLogin" class="btn btn-primary" type="button">Войти</button>
             <button id="btnDemo" class="btn btn-secondary" type="button">Регистрация</button>
           </div>
@@ -56,8 +53,7 @@
       <!-- APP -->
       <section id="screen-app" class="screen" style="display:none;">
         <div class="layout">
-          <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
-          <aside id="appSidebar" class="sidebar">
+          <aside class="sidebar">
             <div class="userbox">
               <div class="avatar" id="userAvatar">U</div>
               <div class="userbox-text">
