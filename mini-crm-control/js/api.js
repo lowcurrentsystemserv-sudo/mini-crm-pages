@@ -72,6 +72,21 @@ export const api = {
     return r;
   },
 
+  requestsList: async ({ status = "", executor = "", q = "" } = {}) => {
+    const r = await httpGet(
+      `/requests-list?status=${encodeURIComponent(status)}&executor=${encodeURIComponent(executor)}&q=${encodeURIComponent(q)}`
+    );
+    return { rows: Array.isArray(r.rows) ? r.rows : [] };
+  },
+
+  requestsCreate: async (payload) => {
+    return await httpPost("/requests-create", payload);
+  },
+
+  requestsUpdate: async ({ requestId, patch }) => {
+    return await httpPost("/requests-update", { requestId, patch });
+  },
+
   executorSummary: () => httpGet("/executor-summary"),
 
   suggestWorkType: (objectId) => httpPost("/suggest-work-type", { objectId }),
