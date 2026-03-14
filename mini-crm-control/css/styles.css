@@ -99,15 +99,20 @@ body[data-viewport="desktop-wide"]{
   margin-top: 10px;
 }
 
-@media (max-width: 900px) {
+.requests-desktop {
+  display: block;
+}
+
+@media (max-width: 768px) {
   .requests-desktop {
-    display: none;
+    display: none !important;
   }
 
   .requests-mobile {
-    display: block;
+    display: block !important;
   }
 }
+
 
 
 .topbar{
