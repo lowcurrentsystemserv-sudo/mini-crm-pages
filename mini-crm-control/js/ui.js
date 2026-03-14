@@ -453,10 +453,6 @@ async function loadAndRenderRequests() {
 
 function renderRequestsTable(rows) {
   const wrap = document.getElementById("requestsTable");
-  console.log("render rows raw:", rows);
-  console.log("first row:", rows?.[0]);
-
-
   if (!wrap) return;
 
   const safeRows = Array.isArray(rows) ? rows : [];
@@ -475,7 +471,6 @@ function renderRequestsTable(rows) {
       .replace(/\s+/g, "-")
       .replace(/[^a-zа-яё0-9_-]/gi, "");
 
-  // ВАЖНО: полностью очищаем контейнер
   wrap.replaceChildren();
 
   if (!safeRows.length) {
@@ -486,9 +481,8 @@ function renderRequestsTable(rows) {
     return;
   }
 
-  // ===== DESKTOP TABLE =====
-  const desktop = document.createElement("div");
-  desktop.className = "requests-desktop";
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "table-wrap";
 
   const table = document.createElement("table");
   table.className = "data-table requests-table";
@@ -512,36 +506,43 @@ function renderRequestsTable(rows) {
 
   for (const r of safeRows) {
     const tr = document.createElement("tr");
-    tr.dataset.requestId = esc(r.requestId);
 
     const tdDate = document.createElement("td");
+    tdDate.dataset.label = "Дата";
     tdDate.textContent = dateOnly(r.createdAt);
 
     const tdObject = document.createElement("td");
+    tdObject.dataset.label = "Объект";
     tdObject.textContent = esc(r.objectName || "—");
 
     const tdDesc = document.createElement("td");
+    tdDesc.dataset.label = "Описание";
     tdDesc.textContent = esc(r.description || "—");
 
     const tdUrgency = document.createElement("td");
+    tdUrgency.dataset.label = "Срочность";
     const urgencyBadge = document.createElement("span");
     urgencyBadge.className = `badge urgency-${cls(r.urgency)}`;
     urgencyBadge.textContent = esc(r.urgency || "—");
     tdUrgency.appendChild(urgencyBadge);
 
     const tdStatus = document.createElement("td");
+    tdStatus.dataset.label = "Статус";
     const statusBadge = document.createElement("span");
     statusBadge.className = `badge status-${cls(r.status)}`;
     statusBadge.textContent = esc(r.status || "—");
     tdStatus.appendChild(statusBadge);
 
     const tdAccepted = document.createElement("td");
+    tdAccepted.dataset.label = "Принял";
     tdAccepted.textContent = esc(r.acceptedBy || "—");
 
     const tdExecutor = document.createElement("td");
+    tdExecutor.dataset.label = "Исполнитель";
     tdExecutor.textContent = esc(r.executor || "—");
 
     const tdActions = document.createElement("td");
+    tdActions.dataset.label = "Действия";
     tdActions.className = "actions-cell";
 
     const btnEdit = document.createElement("button");
@@ -574,73 +575,10 @@ function renderRequestsTable(rows) {
   }
 
   table.appendChild(tbody);
-  desktop.appendChild(table);
-
-  // ===== MOBILE CARDS =====
-  const mobile = document.createElement("div");
-  mobile.className = "requests-mobile";
-
-  for (const r of safeRows) {
-    const card = document.createElement("div");
-    card.className = "request-card";
-    card.dataset.requestId = esc(r.requestId);
-
-    const title = document.createElement("div");
-    title.className = "request-card__title";
-    title.textContent = esc(r.objectName || "—");
-
-    const meta = document.createElement("div");
-    meta.className = "request-card__meta";
-
-    const metaDate = document.createElement("span");
-    metaDate.textContent = dateOnly(r.createdAt);
-
-    const metaUrgency = document.createElement("span");
-    metaUrgency.className = `badge urgency-${cls(r.urgency)}`;
-    metaUrgency.textContent = esc(r.urgency || "—");
-
-    const metaStatus = document.createElement("span");
-    metaStatus.className = `badge status-${cls(r.status)}`;
-    metaStatus.textContent = esc(r.status || "—");
-
-    meta.append(metaDate, metaUrgency, metaStatus);
-
-    const desc = document.createElement("div");
-    desc.className = "request-card__desc";
-    desc.textContent = esc(r.description || "—");
-
-    const rowAccepted = document.createElement("div");
-    rowAccepted.className = "request-card__row";
-    rowAccepted.innerHTML = `<b>Принял:</b> ${esc(r.acceptedBy || "—")}`;
-
-    const rowExecutor = document.createElement("div");
-    rowExecutor.className = "request-card__row";
-    rowExecutor.innerHTML = `<b>Исполнитель:</b> ${esc(r.executor || "—")}`;
-
-    const actions = document.createElement("div");
-    actions.className = "request-card__actions";
-
-    const btnEdit = document.createElement("button");
-    btnEdit.className = "btn small";
-    btnEdit.textContent = "Открыть";
-    btnEdit.onclick = () => openRequestModalEdit(r);
-
-    const btnPlan = document.createElement("button");
-    btnPlan.className = "btn small primary";
-    btnPlan.textContent = "В план";
-    btnPlan.onclick = () => {
-      console.log("plan from request", r);
-      alert("Следующим шагом подключим перевод заявки в план");
-    };
-
-    actions.append(btnEdit, btnPlan);
-
-    card.append(title, meta, desc, rowAccepted, rowExecutor, actions);
-    mobile.appendChild(card);
-  }
-
-  wrap.append(desktop, mobile);
+  tableWrap.appendChild(table);
+  wrap.appendChild(tableWrap);
 }
+
 
 
 
