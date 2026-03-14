@@ -10,21 +10,31 @@ export async function onRequestGet({ request, env }) {
 
   const activeRes = await sbFetch(
     env,
-    `visit_plan?select=id,executor,status,work_type,plan_date,object_name&limit=10`
+    `visit_plan?select=id,work_type,status&executor=eq.${encodeURIComponent(executor)}&status=neq.Выполнено`
   );
+
+  if (!activeRes.ok) {
+    return json({ ok: false, error: activeRes.data, step: "activeRes" }, 500);
+  }
 
   const doneRes = await sbFetch(
     env,
-    `visits_log?select=id,executor,created_date,object_name&limit=10`
+    `visits_log?select=id&executor=eq.${encodeURIComponent(executor)}&created_date=eq.${today}`
   );
 
-  return json({
-    ok: true,
-    debug: {
-      executorFromSession: executor,
-      today,
-      visitPlanSample: activeRes.data,
-      visitsLogSample: doneRes.data
-    }
-  });
+  if (!doneRes.ok) {
+    return json({ ok: false, error: doneRes.data, step: "doneRes" }, 500);
+  }
+
+  const rows = activeRes.data || [];
+
+  const summary = {
+    totalActive: rows.length,
+    plannedCount: rows.filter(r => r.work_type === "Плановое").length,
+    requestCount: rows.filter(r => r.work_type === "Заявка").length,
+    primaryCount: rows.filter(r => r.work_type === "Первичное").length,
+    doneToday: (doneRes.data || []).length,
+  };
+
+  return json({ ok: true, summary });
 }
