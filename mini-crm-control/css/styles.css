@@ -60,58 +60,94 @@ body[data-viewport="desktop-wide"]{
   --login-max: 470px;
 }
 
-.request-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
+#requestsTable {
+  margin-top: 12px;
 }
 
-.request-card__title {
-  font-weight: 700;
-  margin-bottom: 8px;
+#requestsTable .table-wrap {
+  width: 100%;
 }
 
-.request-card__meta {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-.request-card__desc {
-  margin-bottom: 8px;
+.requests-table th,
+.requests-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  vertical-align: top;
+  text-align: left;
+}
+
+.requests-table td:nth-child(2) {
+  width: 19%;
+}
+
+.requests-table td:nth-child(3) {
+  width: 24%;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.request-card__row {
+.actions-cell {
+  white-space: nowrap;
+}
+
+.actions-cell .btn {
+  margin-right: 6px;
   margin-bottom: 6px;
 }
 
-.request-card__actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.requests-desktop {
-  display: block !important;
-}
-
-.requests-mobile {
-  display: none !important;
-}
-
-@media screen and (max-width: 768px) {
-  .requests-desktop {
-    display: none !important;
+/* Телефон */
+@media (max-width: 768px) {
+  .requests-table thead {
+    display: none;
   }
 
-  .requests-mobile {
-    display: block !important;
+  .requests-table,
+  .requests-table tbody,
+  .requests-table tr,
+  .requests-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .requests-table tr {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    padding: 10px;
+  }
+
+  .requests-table td {
+    border: 0;
+    padding: 6px 0;
+    white-space: normal;
+  }
+
+  .requests-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.7;
+    margin-bottom: 2px;
+  }
+
+  .actions-cell {
+    padding-top: 10px !important;
+  }
+
+  .actions-cell .btn {
+    width: 100%;
+    margin-right: 0;
   }
 }
+
 
 
 
