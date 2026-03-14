@@ -5,30 +5,43 @@ export function json(obj, status = 200) {
   });
 }
 
-export async function requireSession(request, env) {
+function decodeBase64Url(str) {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = str.length % 4;
+  if (pad) str += "=".repeat(4 - pad);
+
+  const bin = atob(str);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+export async function requireSession(request) {
   try {
     const cookie = request.headers.get("Cookie") || "";
-    const sid = getCookie(cookie, "sid");
+    const match = cookie.match(/sid=([^;]+)/);
 
-    if (!sid) {
-      return { ok: false, resp: json({ ok: false, error: "Not authenticated" }, 401) };
-    }
-
-    if (!env || !env.SESSIONS || typeof env.SESSIONS.get !== "function") {
-      return { ok: false, resp: json({ ok: false, error: "SESSIONS binding is missing" }, 500) };
-    }
-
-    const raw = await env.SESSIONS.get(sid);
-
-    if (!raw) {
-      return { ok: false, resp: json({ ok: false, error: "Session expired" }, 401) };
+    if (!match) {
+      return {
+        ok: false,
+        resp: json({ ok: false, error: "Not authenticated" }, 401),
+      };
     }
 
     let session;
     try {
-      session = JSON.parse(raw);
+      session = JSON.parse(decodeBase64Url(match[1]));
     } catch {
-      return { ok: false, resp: json({ ok: false, error: "Invalid session data" }, 500) };
+      return {
+        ok: false,
+        resp: json({ ok: false, error: "Invalid session" }, 401),
+      };
+    }
+
+    if (!session || session.exp < Date.now()) {
+      return {
+        ok: false,
+        resp: json({ ok: false, error: "Session expired" }, 401),
+      };
     }
 
     return { ok: true, session };
@@ -39,18 +52,10 @@ export async function requireSession(request, env) {
         {
           ok: false,
           error: "Session check failed",
-          details: String(err)
+          details: String(err),
         },
         500
-      )
+      ),
     };
   }
-}
-
-function getCookie(cookie, name) {
-  const parts = cookie.split(";").map((s) => s.trim());
-  for (const p of parts) {
-    if (p.startsWith(name + "=")) return p.slice((name + "=").length);
-  }
-  return "";
 }
