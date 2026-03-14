@@ -815,50 +815,54 @@ function closeModal() {
 }
 
 /* ===== Request modals ===== */
-export function openRequestModalCreate() {
-  openModal("Новая заявка", `
-    <div class="form-grid">
-      <label>Поиск объекта</label>
-      <input id="req_object_search" type="text" placeholder="Введите название, адрес, город..." />
-      <div id="req_search_results" class="search-results"></div>
+async function openRequestModalCreate() {
+  state.requestSelectedObject = null;
 
-      <label>Выбранный объект</label>
-      <input id="req_object_label" type="text" readonly placeholder="Объект не выбран" />
+  openModal({
+    title: "Новая заявка",
+    bodyHtml: `
+      <div class="form-grid">
+        <label class="label">Поиск объекта</label>
+        <input id="req_object_search" class="input" type="text" placeholder="Введите название, адрес, город..." />
+        <div id="req_search_results" class="search-results"></div>
 
-      <label>Описание</label>
-      <textarea id="req_desc" rows="4" placeholder="Опишите проблему"></textarea>
+        <label class="label">Выбранный объект</label>
+        <input id="req_object_label" class="input" type="text" readonly placeholder="Объект не выбран" />
 
-      <label>Срочность</label>
-      <select id="req_urgency">
-        <option value="Низкая">Низкая</option>
-        <option value="Средняя" selected>Средняя</option>
-        <option value="Срочная">Срочная</option>
-      </select>
+        <label class="label">Описание</label>
+        <textarea id="req_desc" class="textarea" rows="4" placeholder="Опишите проблему"></textarea>
 
-      <label>Исполнитель</label>
-      <input id="req_executor" type="text" placeholder="Необязательно" />
-    </div>
-  `, async () => {
-    const selected = state.requestSelectedObject;
-    const descEl = document.getElementById("req_desc");
-    const urgencyEl = document.getElementById("req_urgency");
-    const executorEl = document.getElementById("req_executor");
+        <label class="label">Срочность</label>
+        <select id="req_urgency" class="input">
+          <option value="Низкая">Низкая</option>
+          <option value="Средняя" selected>Средняя</option>
+          <option value="Срочная">Срочная</option>
+        </select>
 
-    const description = descEl?.value.trim() || "";
-    const urgency = urgencyEl?.value || "Средняя";
-    const executor = executorEl?.value.trim() || "";
+        <label class="label">Исполнитель</label>
+        <input id="req_executor" class="input" type="text" placeholder="Необязательно" />
+      </div>
+    `,
+    onOk: async () => {
+      const selected = state.requestSelectedObject;
+      const descEl = document.getElementById("req_desc");
+      const urgencyEl = document.getElementById("req_urgency");
+      const executorEl = document.getElementById("req_executor");
 
-    if (!selected?.objectId) {
-      alert("Выберите объект");
-      return false;
-    }
+      const description = descEl?.value.trim() || "";
+      const urgency = urgencyEl?.value || "Средняя";
+      const executor = executorEl?.value.trim() || "";
 
-    if (!description) {
-      alert("Введите описание заявки");
-      return false;
-    }
+      if (!selected?.objectId) {
+        alert("Выберите объект");
+        return false;
+      }
 
-    try {
+      if (!description) {
+        alert("Введите описание заявки");
+        return false;
+      }
+
       await api.requestsCreate({
         objectId: Number(selected.objectId),
         objectName: selected.name,
@@ -869,63 +873,56 @@ export function openRequestModalCreate() {
         executor
       });
 
+      toast("Заявка создана");
+      await loadAndRenderRequests();
       state.requestSelectedObject = null;
-      await openDispatcherRequests();
       return true;
-    } catch (e) {
-      console.error("requestsCreate error:", e);
-      alert("Не удалось создать заявку");
-      return false;
     }
   });
 
-  state.requestSelectedObject = null;
+  const elsReq = {
+    search: document.getElementById("req_object_search"),
+    results: document.getElementById("req_search_results"),
+    label: document.getElementById("req_object_label")
+  };
 
-  setTimeout(() => {
-    const els = {
-      search: document.getElementById("req_object_search"),
-      results: document.getElementById("req_search_results"),
-      label: document.getElementById("req_object_label")
-    };
+  if (!elsReq.search || !elsReq.results || !elsReq.label) {
+    console.error("Request modal elements not found", elsReq);
+    return;
+  }
 
-    if (!els.search || !els.results || !els.label) {
-      console.error("Request modal elements not found", els);
+  let searchToken = 0;
+
+  elsReq.search.oninput = debounce(async () => {
+    const text = elsReq.search.value.trim();
+    elsReq.results.innerHTML = "";
+    if (!text) return;
+
+    const token = ++searchToken;
+
+    let items = [];
+    try {
+      const res = await api.objectsSearchDispatcher(text, 25);
+      if (token !== searchToken) return;
+      items = Array.isArray(res.items) ? res.items : [];
+    } catch (e) {
+      console.error("objectsSearchDispatcher error:", e);
       return;
     }
 
-    let searchToken = 0;
-
-    els.search.oninput = debounce(async () => {
-      const text = els.search.value.trim();
-      els.results.innerHTML = "";
-      if (!text) return;
-
-      const token = ++searchToken;
-
-      let items = [];
-      try {
-        const res = await api.objectsSearchDispatcher(text, 25);
-        if (token !== searchToken) return;
-        items = Array.isArray(res.items) ? res.items : [];
-      } catch (e) {
-        console.error("objectsSearchDispatcher error:", e);
-        return;
-      }
-
-      for (const o of items) {
-        const div = document.createElement("div");
-        div.className = "item";
-        div.textContent = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
-        div.addEventListener("click", () => {
-          state.requestSelectedObject = o;
-          els.label.value = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
-          els.search.value = "";
-          els.results.innerHTML = "";
-        });
-        els.results.appendChild(div);
-      }
-    }, 250);
-  }, 0);
+    for (const o of items) {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.textContent = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
+      div.addEventListener("click", () => {
+        state.requestSelectedObject = o;
+        elsReq.label.value = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
+        elsReq.search.value = "";
+        elsReq.results.innerHTML = "";
+      });
+      elsReq.results.appendChild(div);
+    }
+  }, 250);
 }
 
 function openRequestModalEdit(req) {
