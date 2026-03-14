@@ -385,19 +385,19 @@ export async function openMasterMyVisits() {
 
 /* ===== Dispatcher: Requests ===== */
 export async function openDispatcherRequests() {
-  await ensureObjectsLoaded();
-  openView("dispatcherRequests", "Заявки (Requests)", "Создание/редактирование заявок. Удаление отключено.");
+  openView("dispatcherRequests", "Заявки", "Создание и редактирование заявок.");
 
   await loadAndRenderRequests();
 
   const btnCreate = document.getElementById("btnCreateRequest");
   const btnReload = document.getElementById("btnReloadRequests");
-  btnCreate.onclick = () => openRequestModalCreate();
-  btnReload.onclick = () => loadAndRenderRequests();
 
-  els.reqStatusFilter.onchange = () => loadAndRenderRequests();
-  els.reqExecutorFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
-  els.reqSearchFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
+  if (btnCreate) btnCreate.onclick = () => openRequestModalCreate();
+  if (btnReload) btnReload.onclick = () => loadAndRenderRequests();
+
+  if (els.reqStatusFilter) els.reqStatusFilter.onchange = () => loadAndRenderRequests();
+  if (els.reqExecutorFilter) els.reqExecutorFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
+  if (els.reqSearchFilter) els.reqSearchFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
 }
 
 async function loadAndRenderRequests() {
