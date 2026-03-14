@@ -5,6 +5,20 @@ export async function onRequestGet({ request, env }) {
   const session = await requireSession(request, env);
   if (!session.ok) return session.resp;
 
+  return json({
+    ok: true,
+    debug: {
+      hasSupabaseUrl: !!env.SUPABASE_URL,
+      hasServiceRoleKey: !!env.SUPABASE_SERVICE_ROLE_KEY,
+      executor: session.session.name
+    }
+  });
+}
+
+export async function onRequestGet({ request, env }) {
+  const session = await requireSession(request, env);
+  if (!session.ok) return session.resp;
+
   const executor = session.session.name;
   const today = new Date().toISOString().slice(0, 10);
 
