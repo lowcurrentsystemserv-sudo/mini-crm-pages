@@ -411,6 +411,9 @@ async function loadAndRenderRequests() {
 
 function renderRequestsTable(rows) {
   const wrap = document.getElementById("requestsTable");
+  console.log("renderRequestsTable wrap:", wrap);
+  console.log("renderRequestsTable rows:", rows);
+
   if (!wrap) return;
 
   const safeRows = Array.isArray(rows) ? rows : [];
@@ -420,8 +423,8 @@ function renderRequestsTable(rows) {
     return;
   }
 
-  wrap.innerHTML = `
-    <div class="table-wrap">
+  const desktopTable = `
+    <div class="table-wrap requests-desktop">
       <table class="data-table requests-table">
         <thead>
           <tr>
@@ -430,6 +433,7 @@ function renderRequestsTable(rows) {
             <th>Описание</th>
             <th>Срочность</th>
             <th>Статус</th>
+            <th>Принял</th>
             <th>Исполнитель</th>
             <th>Действия</th>
           </tr>
@@ -438,10 +442,8 @@ function renderRequestsTable(rows) {
           ${safeRows.map(r => `
             <tr data-request-id="${r.requestId}">
               <td>${escapeHtml(formatDateOnly(r.createdAt || ""))}</td>
-              <td class="req-object-cell">
-                <div class="req-object-name">${escapeHtml(r.objectName || "—")}</div>
-              </td>
-              <td class="req-desc-cell">${escapeHtml(r.description || "—")}</td>
+              <td>${escapeHtml(r.objectName || "—")}</td>
+              <td>${escapeHtml(r.description || "—")}</td>
               <td>
                 <span class="badge urgency-${slugify(r.urgency || "none")}">
                   ${escapeHtml(r.urgency || "—")}
@@ -452,6 +454,7 @@ function renderRequestsTable(rows) {
                   ${escapeHtml(r.status || "—")}
                 </span>
               </td>
+              <td>${escapeHtml(r.acceptedBy || "—")}</td>
               <td>${escapeHtml(r.executor || "—")}</td>
               <td class="actions-cell">
                 <button class="btn small" data-action="edit" data-id="${r.requestId}">Открыть</button>
@@ -463,6 +466,34 @@ function renderRequestsTable(rows) {
       </table>
     </div>
   `;
+
+  const mobileCards = `
+    <div class="requests-mobile">
+      ${safeRows.map(r => `
+        <div class="request-card" data-request-id="${r.requestId}">
+          <div class="request-card__title">${escapeHtml(r.objectName || "—")}</div>
+          <div class="request-card__meta">
+            <span>${escapeHtml(formatDateOnly(r.createdAt || ""))}</span>
+            <span class="badge urgency-${slugify(r.urgency || "none")}">
+              ${escapeHtml(r.urgency || "—")}
+            </span>
+            <span class="badge status-${slugify(r.status || "none")}">
+              ${escapeHtml(r.status || "—")}
+            </span>
+          </div>
+          <div class="request-card__desc">${escapeHtml(r.description || "—")}</div>
+          <div class="request-card__row"><b>Принял:</b> ${escapeHtml(r.acceptedBy || "—")}</div>
+          <div class="request-card__row"><b>Исполнитель:</b> ${escapeHtml(r.executor || "—")}</div>
+          <div class="request-card__actions">
+            <button class="btn small" data-action="edit" data-id="${r.requestId}">Открыть</button>
+            <button class="btn small primary" data-action="plan" data-id="${r.requestId}">В план</button>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  wrap.innerHTML = desktopTable + mobileCards;
 
   wrap.querySelectorAll("[data-action='edit']").forEach(btn => {
     btn.onclick = () => {
@@ -482,6 +513,30 @@ function renderRequestsTable(rows) {
       }
     };
   });
+}
+
+function formatDateOnly(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString("ru-RU");
+}
+
+function slugify(v) {
+  return String(v || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zа-яё0-9_-]/gi, "");
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function formatDateOnly(value) {
