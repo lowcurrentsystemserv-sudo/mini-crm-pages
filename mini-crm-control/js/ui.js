@@ -182,39 +182,9 @@ export function bindGlobalUI() {
 export async function ensureObjectsLoaded() {
   if (state.objects?.length) return;
 
-  let data = { objects: [], plan: [] };
-
-  try {
-    data = await api.bootstrap();
-  } catch (e) {
-    console.warn("bootstrap failed, fallback to objectsList()", e);
-  }
-
-  let objects = Array.isArray(data.objects) ? data.objects : [];
-
-  if (!objects.length) {
-    const res = await api.objectsList();
-    objects = res.objects || [];
-  }
-
-  state.objects = objects.map(o => ({
-    objectId: String(o.objectId ?? o.id ?? ""),
-    name: o.name ?? "",
-    system: o.system ?? "",
-    city: o.city ?? "",
-    address: o.address ?? "",
-    category: o.category ?? "",
-    group: o.group ?? "",
-    active: o.active !== false && o.active !== "Архив" && o.active !== "Нет",
-    description: o.description ?? ""
-  }));
-
+  state.objects = [];
   state.objectsMap = {};
-  for (const o of state.objects) {
-    state.objectsMap[o.objectId] = o;
-  }
-
-  state.plan = Array.isArray(data.plan) ? data.plan : [];
+  state.plan = [];
 }
 
 function hideAllViews() {
@@ -340,7 +310,6 @@ function renderQuickActions() {
 
 /* ===== Master ===== */
 export async function openMasterVisit() {
-  await ensureObjectsLoaded();
   openView("masterVisit", "Фиксация визита", "Выберите объект и оставьте комментарий.");
 
   state.selectedObject = null;
@@ -407,7 +376,6 @@ export async function submitVisit() {
 }
 
 export async function openMasterMyVisits() {
-  await ensureObjectsLoaded();
   openView("masterMyVisits", "Мой план", "План визитов по вашему исполнителю.");
 
   const res = await api.planList({ executor: state.user?.name || "" });
