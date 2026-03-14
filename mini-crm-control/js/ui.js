@@ -385,13 +385,12 @@ export async function openMasterMyVisits() {
 
 /* ===== Dispatcher: Requests ===== */
 export async function openDispatcherRequests() {
-  openView("dispatcherRequests", "Заявки", "Создание и редактирование заявок.");
+  openView("dispatcherRequests", "Заявки", "Создание/редактирование заявок.");
 
   await loadAndRenderRequests();
 
   const btnCreate = document.getElementById("btnCreateRequest");
   const btnReload = document.getElementById("btnReloadRequests");
-
   if (btnCreate) btnCreate.onclick = () => openRequestModalCreate();
   if (btnReload) btnReload.onclick = () => loadAndRenderRequests();
 
@@ -399,6 +398,7 @@ export async function openDispatcherRequests() {
   if (els.reqExecutorFilter) els.reqExecutorFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
   if (els.reqSearchFilter) els.reqSearchFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
 }
+
 
 async function loadAndRenderRequests() {
   const status = els.reqStatusFilter.value || "";
@@ -417,6 +417,30 @@ function renderRequestsTable(rows) {
   if (!wrap) return;
 
   const safeRows = Array.isArray(rows) ? rows : [];
+
+  const esc = (v) => {
+    return String(v ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  };
+
+  const dateOnly = (value) => {
+    if (!value) return "—";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return esc(value);
+    return d.toLocaleDateString("ru-RU");
+  };
+
+  const cls = (v) => {
+    return String(v || "none")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zа-яё0-9_-]/gi, "");
+  };
 
   if (!safeRows.length) {
     wrap.innerHTML = `<div class="empty">Заявок пока нет</div>`;
@@ -440,25 +464,25 @@ function renderRequestsTable(rows) {
         </thead>
         <tbody>
           ${safeRows.map(r => `
-            <tr data-request-id="${r.requestId}">
-              <td>${escapeHtml(formatDateOnly(r.createdAt || ""))}</td>
-              <td>${escapeHtml(r.objectName || "—")}</td>
-              <td>${escapeHtml(r.description || "—")}</td>
+            <tr data-request-id="${esc(r.requestId)}">
+              <td>${dateOnly(r.createdAt)}</td>
+              <td>${esc(r.objectName || "—")}</td>
+              <td>${esc(r.description || "—")}</td>
               <td>
-                <span class="badge urgency-${slugify(r.urgency || "none")}">
-                  ${escapeHtml(r.urgency || "—")}
+                <span class="badge urgency-${cls(r.urgency)}">
+                  ${esc(r.urgency || "—")}
                 </span>
               </td>
               <td>
-                <span class="badge status-${slugify(r.status || "none")}">
-                  ${escapeHtml(r.status || "—")}
+                <span class="badge status-${cls(r.status)}">
+                  ${esc(r.status || "—")}
                 </span>
               </td>
-              <td>${escapeHtml(r.acceptedBy || "—")}</td>
-              <td>${escapeHtml(r.executor || "—")}</td>
+              <td>${esc(r.acceptedBy || "—")}</td>
+              <td>${esc(r.executor || "—")}</td>
               <td class="actions-cell">
-                <button class="btn small" data-action="edit" data-id="${r.requestId}">Открыть</button>
-                <button class="btn small primary" data-action="plan" data-id="${r.requestId}">В план</button>
+                <button class="btn small" data-action="edit" data-id="${esc(r.requestId)}">Открыть</button>
+                <button class="btn small primary" data-action="plan" data-id="${esc(r.requestId)}">В план</button>
               </td>
             </tr>
           `).join("")}
@@ -470,23 +494,19 @@ function renderRequestsTable(rows) {
   const mobileCardsHtml = `
     <div class="requests-mobile">
       ${safeRows.map(r => `
-        <div class="request-card" data-request-id="${r.requestId}">
-          <div class="request-card__title">${escapeHtml(r.objectName || "—")}</div>
+        <div class="request-card" data-request-id="${esc(r.requestId)}">
+          <div class="request-card__title">${esc(r.objectName || "—")}</div>
           <div class="request-card__meta">
-            <span>${escapeHtml(formatDateOnly(r.createdAt || ""))}</span>
-            <span class="badge urgency-${slugify(r.urgency || "none")}">
-              ${escapeHtml(r.urgency || "—")}
-            </span>
-            <span class="badge status-${slugify(r.status || "none")}">
-              ${escapeHtml(r.status || "—")}
-            </span>
+            <span>${dateOnly(r.createdAt)}</span>
+            <span class="badge urgency-${cls(r.urgency)}">${esc(r.urgency || "—")}</span>
+            <span class="badge status-${cls(r.status)}">${esc(r.status || "—")}</span>
           </div>
-          <div class="request-card__desc">${escapeHtml(r.description || "—")}</div>
-          <div class="request-card__row"><b>Принял:</b> ${escapeHtml(r.acceptedBy || "—")}</div>
-          <div class="request-card__row"><b>Исполнитель:</b> ${escapeHtml(r.executor || "—")}</div>
+          <div class="request-card__desc">${esc(r.description || "—")}</div>
+          <div class="request-card__row"><b>Принял:</b> ${esc(r.acceptedBy || "—")}</div>
+          <div class="request-card__row"><b>Исполнитель:</b> ${esc(r.executor || "—")}</div>
           <div class="request-card__actions">
-            <button class="btn small" data-action="edit" data-id="${r.requestId}">Открыть</button>
-            <button class="btn small primary" data-action="plan" data-id="${r.requestId}">В план</button>
+            <button class="btn small" data-action="edit" data-id="${esc(r.requestId)}">Открыть</button>
+            <button class="btn small primary" data-action="plan" data-id="${esc(r.requestId)}">В план</button>
           </div>
         </div>
       `).join("")}
@@ -514,6 +534,7 @@ function renderRequestsTable(rows) {
     };
   });
 }
+
 
 function slugify(v) {
   return String(v || "")
