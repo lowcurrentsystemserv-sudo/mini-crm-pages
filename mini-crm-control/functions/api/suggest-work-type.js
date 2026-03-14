@@ -1,78 +1,61 @@
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8"
-    }
-  });
-}
+import { json, sbFetch } from "../_lib/supabase.js";
+import { requireSession } from "../_lib/session.js";
 
-async function callGas(env, formObj) {
-  const body = new URLSearchParams(formObj);
+export async function onRequestPost({ request, env }) {
+  const session = await requireSession(request);
+  if (!session.ok) return session.resp;
 
-  const r = await fetch(env.GAS_URL, {
-    method: "POST",
-    body,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-    }
-  });
-
-  const text = await r.text();
-
+  let body;
   try {
-    return JSON.parse(text);
+    body = await request.json();
   } catch {
-    return {
-      ok: false,
-      error: "GAS returned non-JSON",
-      raw: text.slice(0, 300)
-    };
+    return json({ ok: false, error: "Invalid JSON body", step: "parseBody" }, 400);
   }
-}
 
-function decodeBase64Url(str) {
-  str = str.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = str.length % 4;
-  if (pad) str += "=".repeat(4 - pad);
+  const objectId = Number(body.objectId);
+  if (!objectId) {
+    return json({ ok: false, error: "objectId is required", step: "validateBody" }, 400);
+  }
 
-  const bin = atob(str);
-  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
 
-async function requireSession(request) {
-  const cookie = request.headers.get("Cookie") || "";
-  const match = cookie.match(/sid=([^;]+)/);
+  const res = await sbFetch(
+    env,
+    `visits_log?select=created_date&object_id=eq.${objectId}&order=created_date.desc&limit=200`
+  );
 
-  if (!match) return { ok: false, error: "No session" };
+  if (!res.ok) {
+    return json({ ok: false, error: res.data, step: "visitsLogRes" }, 500);
+  }
 
-  try {
-    const session = JSON.parse(decodeBase64Url(match[1]));
+  const rows = res.data || [];
 
-    if (session.exp < Date.now()) {
-      return { ok: false, error: "Session expired" };
+  let hasThisYear = false;
+  let hasThisMonth = false;
+
+  for (const row of rows) {
+    if (!row.created_date) continue;
+
+    const d = new Date(row.created_date);
+    if (Number.isNaN(d.getTime())) continue;
+
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+
+    if (y === currentYear) {
+      hasThisYear = true;
+      if (m === currentMonth) {
+        hasThisMonth = true;
+        break;
+      }
     }
-
-    return { ok: true, session };
-  } catch (e) {
-    return { ok: false, error: "Invalid session" };
   }
-}
 
-export async function onRequestPost(context) {
-  const { request, env } = context;
+  let type = "Первичное";
+  if (hasThisYear && !hasThisMonth) type = "Плановое";
+  if (hasThisMonth) type = "Заявка";
 
-  const s = await requireSession(request);
-  if (!s.ok) return json({ ok: false, error: s.error }, 401);
-
-  const body = await request.json();
-  const objectId = String(body.objectId || "").trim();
-
-  const gasRes = await callGas(env, {
-    action: "suggest_work_type",
-    objectId
-  });
-
-  return json(gasRes, gasRes.ok ? 200 : 500);
+  return json({ ok: true, type });
 }
