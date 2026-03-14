@@ -840,9 +840,13 @@ export function openRequestModalCreate() {
     </div>
   `, async () => {
     const selected = state.requestSelectedObject;
-    const description = document.getElementById("req_desc").value.trim();
-    const urgency = document.getElementById("req_urgency").value;
-    const executor = document.getElementById("req_executor").value.trim();
+    const descEl = document.getElementById("req_desc");
+    const urgencyEl = document.getElementById("req_urgency");
+    const executorEl = document.getElementById("req_executor");
+
+    const description = descEl?.value.trim() || "";
+    const urgency = urgencyEl?.value || "Средняя";
+    const executor = executorEl?.value.trim() || "";
 
     if (!selected?.objectId) {
       alert("Выберите объект");
@@ -875,52 +879,55 @@ export function openRequestModalCreate() {
     }
   });
 
-  console.log("modal html ready");
-  console.log("req_object_search:", document.getElementById("req_object_search"));
-  console.log("req_search_results:", document.getElementById("req_search_results"));
-  console.log("req_object_label:", document.getElementById("req_object_label"));
-
   state.requestSelectedObject = null;
 
-  const els = {
-    search: document.getElementById("req_object_search"),
-    results: document.getElementById("req_search_results"),
-    label: document.getElementById("req_object_label")
-  };
+  setTimeout(() => {
+    const els = {
+      search: document.getElementById("req_object_search"),
+      results: document.getElementById("req_search_results"),
+      label: document.getElementById("req_object_label")
+    };
 
-  let searchToken = 0;
-
-  els.search.oninput = debounce(async () => {
-    const text = els.search.value.trim();
-    els.results.innerHTML = "";
-    if (!text) return;
-
-    const token = ++searchToken;
-
-    let items = [];
-    try {
-      const res = await api.objectsSearchDispatcher(text, 25);
-      if (token !== searchToken) return;
-      items = Array.isArray(res.items) ? res.items : [];
-    } catch (e) {
-      console.error("objectsSearchDispatcher error:", e);
+    if (!els.search || !els.results || !els.label) {
+      console.error("Request modal elements not found", els);
       return;
     }
 
-    for (const o of items) {
-      const div = document.createElement("div");
-      div.className = "item";
-      div.textContent = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
-      div.addEventListener("click", () => {
-        state.requestSelectedObject = o;
-        els.label.value = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
-        els.search.value = "";
-        els.results.innerHTML = "";
-      });
-      els.results.appendChild(div);
-    }
-  }, 250);
+    let searchToken = 0;
+
+    els.search.oninput = debounce(async () => {
+      const text = els.search.value.trim();
+      els.results.innerHTML = "";
+      if (!text) return;
+
+      const token = ++searchToken;
+
+      let items = [];
+      try {
+        const res = await api.objectsSearchDispatcher(text, 25);
+        if (token !== searchToken) return;
+        items = Array.isArray(res.items) ? res.items : [];
+      } catch (e) {
+        console.error("objectsSearchDispatcher error:", e);
+        return;
+      }
+
+      for (const o of items) {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.textContent = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
+        div.addEventListener("click", () => {
+          state.requestSelectedObject = o;
+          els.label.value = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
+          els.search.value = "";
+          els.results.innerHTML = "";
+        });
+        els.results.appendChild(div);
+      }
+    }, 250);
+  }, 0);
 }
+
 function openRequestModalEdit(req) {
   openModal({
     title: `Редактировать заявку ${req.requestId}`,
