@@ -8,8 +8,12 @@ export async function onRequestPost({ request, env }) {
   let body;
   try {
     body = await request.json();
-  } catch {
-    return json({ ok: false, error: "Invalid JSON body" }, 400);
+  } catch (e) {
+    return json({
+      ok: false,
+      step: "parseBody",
+      error: String(e)
+    }, 400);
   }
 
   const objectId = Number(body.objectId);
@@ -19,60 +23,69 @@ export async function onRequestPost({ request, env }) {
   const today = new Date().toISOString().slice(0, 10);
 
   if (!objectId) {
-    return json({ ok: false, error: "objectId is required" }, 400);
+    return json({
+      ok: false,
+      step: "validateBody",
+      error: "objectId is required",
+      body
+    }, 400);
   }
 
-  // 1) пишем лог выполнения
+  const logPayload = {
+    created_date: today,
+    object_id: objectId,
+    object_name: objectName || null,
+    executor: executor,
+    executor_comment: comment || null
+  };
+
   const insertLogRes = await sbFetch(env, "visits_log", {
     method: "POST",
     headers: {
       Prefer: "return=representation"
     },
-    body: JSON.stringify([
-      {
-        created_date: today,
-        object_id: objectId,
-        object_name: objectName || null,
-        executor: executor,
-        executor_comment: comment || null
-      }
-    ])
+    body: JSON.stringify([logPayload])
   });
 
   if (!insertLogRes.ok) {
     return json({
       ok: false,
       step: "insertLogRes",
+      payload: logPayload,
       error: insertLogRes.data
     }, 500);
   }
 
-  // 2) находим открытую запись плана по этому объекту и исполнителю
   const findPlanRes = await sbFetch(
     env,
-    `visit_plan?select=id,plan_date,status,object_id,executor&object_id=eq.${objectId}&executor=eq.${encodeURIComponent(executor)}&or=(status.neq.Выполнено,status.is.null)&order=plan_date.asc&limit=1`
+    `visit_plan?select=id,plan_date,status,object_id,executor,object_name&object_id=eq.${objectId}&executor=eq.${encodeURIComponent(executor)}&or=(status.neq.Выполнено,status.is.null)&order=plan_date.asc&limit=1`
   );
 
   if (!findPlanRes.ok) {
     return json({
       ok: false,
       step: "findPlanRes",
-      error: findPlanRes.data
+      error: findPlanRes.data,
+      insertedLog: insertLogRes.data?.[0] || null
     }, 500);
   }
 
   const planRow = (findPlanRes.data || [])[0];
 
-  // Если план не найден, лог уже записан — это не фатально
   if (!planRow) {
     return json({
       ok: true,
       warning: "Visit saved to log, but no active plan row found",
-      log: insertLogRes.data?.[0] || null
+      step: "noPlanRow",
+      insertedLog: insertLogRes.data?.[0] || null
     });
   }
 
-  // 3) обновляем план
+  const updatePayload = {
+    status: "Выполнено",
+    done_date: today
+  };
+
   const updatePlanRes = await sbFetch(
     env,
     `visit_plan?id=eq.${planRow.id}`,
@@ -81,10 +94,7 @@ export async function onRequestPost({ request, env }) {
       headers: {
         Prefer: "return=representation"
       },
-      body: JSON.stringify({
-        status: "Выполнено",
-        done_date: today
-      })
+      body: JSON.stringify(updatePayload)
     }
   );
 
@@ -93,12 +103,15 @@ export async function onRequestPost({ request, env }) {
       ok: false,
       step: "updatePlanRes",
       error: updatePlanRes.data,
-      log: insertLogRes.data?.[0] || null
+      planRow,
+      updatePayload,
+      insertedLog: insertLogRes.data?.[0] || null
     }, 500);
   }
 
   return json({
     ok: true,
+    step: "done",
     log: insertLogRes.data?.[0] || null,
     plan: updatePlanRes.data?.[0] || null
   });
