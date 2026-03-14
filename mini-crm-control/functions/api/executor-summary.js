@@ -1,9 +1,5 @@
+import { json } from "../_lib/supabase.js";
+
 export async function onRequestGet() {
-  return new Response(
-    JSON.stringify({ ok: true, step: "executor-summary alive" }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json; charset=utf-8" }
-    }
-  );
+  return json({ ok: true, step: "import supabase helper ok" });
 }
