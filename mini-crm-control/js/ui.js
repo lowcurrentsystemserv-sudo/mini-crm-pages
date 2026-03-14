@@ -932,6 +932,8 @@ function openModal({ title, bodyHtml, onOk }) {
   els.modalTitle.textContent = title;
   els.modalBody.innerHTML = bodyHtml;
   els.modalOverlay.style.display = "flex";
+  document.body.classList.add("modal-open");
+
 
   const okHandler = async () => {
     try {
@@ -951,6 +953,8 @@ function closeModal() {
   els.modalTitle.textContent = "";
   els.modalBody.innerHTML = "";
   els.modalOk.onclick = null;
+  document.body.classList.remove("modal-open");
+
 }
 
 /* ===== Request modals ===== */
