@@ -53,6 +53,11 @@ export const api = {
     return { objects: items.map(mapPlannedItemToObject) };
   },
 
+  objectsSearch: async (q, limit = 20) => {
+    const r = await httpGet(`/objects-search?q=${encodeURIComponent(q)}&limit=${limit}`);
+    return { items: Array.isArray(r.items) ? r.items : [] };
+  },
+
   // ✅ UI ожидает: api.planList({executor}) -> { rows:[...] }
   // executor параметр игнорируем, т.к. сервер берёт пользователя из cookie
   planList: async () => {
