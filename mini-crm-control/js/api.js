@@ -46,13 +46,6 @@ export const api = {
   login: (data) => httpPost("/login", data),
   me: () => httpGet("/me"),
 
-  // ✅ UI ожидает: { objects: [...] }
-  objectsList: async () => {
-    const r = await httpGet("/planned-objects"); // {ok:true, items:[...]}
-    const items = Array.isArray(r.items) ? r.items : [];
-    return { objects: items.map(mapPlannedItemToObject) };
-  },
-
   objectsSearch: async (q, limit = 20) => {
     const r = await httpGet(`/objects-search?q=${encodeURIComponent(q)}&limit=${limit}`);
     return { items: Array.isArray(r.items) ? r.items : [] };
@@ -60,8 +53,9 @@ export const api = {
 
   // ✅ UI ожидает: api.planList({executor}) -> { rows:[...] }
   // executor параметр игнорируем, т.к. сервер берёт пользователя из cookie
+  
   planList: async () => {
-    const r = await httpGet("/executor-plan"); // {ok:true, rows:[...]}
+    const r = await httpGet("/executor-plan");
     return { rows: Array.isArray(r.rows) ? r.rows : [] };
   },
 
@@ -82,26 +76,7 @@ export const api = {
 
   suggestWorkType: (objectId) => httpPost("/suggest-work-type", { objectId }),
 
-  //ускоряем процесс авторизации и подгруз данных
-
-  bootstrap: async () => {
-    const r = await httpGet("/bootstrap");
-  
-    const objects = Array.isArray(r.objects)
-      ? r.objects.map(mapPlannedItemToObject)
-      : [];
-  
-    const plan = Array.isArray(r.plan) ? r.plan : [];
-  
-    return {
-      ok: !!r.ok,
-      objects,
-      plan
-    };
-  },
-
   // (на всякий случай оставим старые имена, чтобы нигде не упало)
-  plannedObjects: async () => (await httpGet("/planned-objects")).items || [],
   executorPlan: async () => (await httpGet("/executor-plan")).rows || [],
   saveVisit: async (data) => httpPost("/save-visit", data),
 };
