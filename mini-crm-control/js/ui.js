@@ -401,13 +401,21 @@ export async function openDispatcherRequests() {
 
 
 async function loadAndRenderRequests() {
-  const status = els.reqStatusFilter.value || "";
-  const executor = els.reqExecutorFilter.value.trim();
-  const q = els.reqSearchFilter.value.trim();
-  const res = await api.requestsList({ status, executor, q });
-  state.requests = res.rows || [];
-  els.requestsTable.innerHTML = renderRequestsTable(state.requests);
+  const status = els.reqStatusFilter?.value || "";
+  const executor = els.reqExecutorFilter?.value?.trim() || "";
+  const q = els.reqSearchFilter?.value?.trim() || "";
+
+  try {
+    const res = await api.requestsList({ status, executor, q });
+    const rows = Array.isArray(res.rows) ? res.rows : [];
+    renderRequestsTable(rows); // только так
+  } catch (e) {
+    console.error("loadAndRenderRequests error:", e);
+    const wrap = document.getElementById("requestsTable");
+    if (wrap) wrap.innerHTML = `<div class="empty">Не удалось загрузить заявки</div>`;
+  }
 }
+
 
 function renderRequestsTable(rows) {
   const wrap = document.getElementById("requestsTable");
