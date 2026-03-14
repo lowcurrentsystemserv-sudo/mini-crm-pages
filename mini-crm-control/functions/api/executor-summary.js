@@ -1,75 +1,40 @@
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8"
-    }
-  });
-}
+import { json, sbFetch } from "../_lib/supabase.js";
+import { requireSession } from "../_lib/session.js";
 
-async function callGas(env, formObj) {
-  const body = new URLSearchParams(formObj);
+export async function onRequestGet({ request, env }) {
+  const session = await requireSession(request, env);
+  if (!session.ok) return session.resp;
 
-  const r = await fetch(env.GAS_URL, {
-    method: "POST",
-    body,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-    }
-  });
+  const executor = session.session.name;
+  const today = new Date().toISOString().slice(0, 10);
 
-  const text = await r.text();
+  const activeRes = await sbFetch(
+    env,
+    `visit_plan?select=id,work_type,status&executor=eq.${encodeURIComponent(executor)}&status=neq.Выполнено`
+  );
 
-  try {
-    return JSON.parse(text);
-  } catch {
-    return {
-      ok: false,
-      error: "GAS returned non-JSON",
-      raw: text.slice(0, 300)
-    };
+  if (!activeRes.ok) {
+    return json({ ok: false, error: activeRes.data }, 500);
   }
-}
 
-function decodeBase64Url(str) {
-  str = str.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = str.length % 4;
-  if (pad) str += "=".repeat(4 - pad);
+  const doneRes = await sbFetch(
+    env,
+    `visits_log?select=id&executor=eq.${encodeURIComponent(executor)}&created_date=eq.${today}`
+  );
 
-  const bin = atob(str);
-  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
-
-async function requireSession(request) {
-  const cookie = request.headers.get("Cookie") || "";
-  const match = cookie.match(/sid=([^;]+)/);
-
-  if (!match) return { ok: false, error: "No session" };
-
-  try {
-    const session = JSON.parse(decodeBase64Url(match[1]));
-
-    if (session.exp < Date.now()) {
-      return { ok: false, error: "Session expired" };
-    }
-
-    return { ok: true, session };
-  } catch (e) {
-    return { ok: false, error: "Invalid session" };
+  if (!doneRes.ok) {
+    return json({ ok: false, error: doneRes.data }, 500);
   }
-}
 
-export async function onRequestGet(context) {
-  const { request, env } = context;
+  const rows = activeRes.data || [];
 
-  const s = await requireSession(request);
-  if (!s.ok) return json({ ok: false, error: s.error }, 401);
+  const summary = {
+    totalActive: rows.length,
+    plannedCount: rows.filter(r => r.work_type === "Плановое").length,
+    requestCount: rows.filter(r => r.work_type === "Заявка").length,
+    primaryCount: rows.filter(r => r.work_type === "Первичное").length,
+    doneToday: (doneRes.data || []).length,
+  };
 
-  const gasRes = await callGas(env, {
-    action: "executor_summary",
-    userName: s.session.name
-  });
-
-  return json(gasRes, gasRes.ok ? 200 : 500);
+  return json({ ok: true, summary });
 }
