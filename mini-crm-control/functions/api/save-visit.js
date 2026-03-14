@@ -8,12 +8,8 @@ export async function onRequestPost({ request, env }) {
   let body;
   try {
     body = await request.json();
-  } catch (e) {
-    return json({
-      ok: false,
-      step: "parseBody",
-      error: String(e)
-    }, 400);
+  } catch {
+    return json({ ok: false, error: "Invalid JSON body", step: "parseBody" }, 400);
   }
 
   const objectId = Number(body.objectId);
@@ -23,35 +19,29 @@ export async function onRequestPost({ request, env }) {
   const today = new Date().toISOString().slice(0, 10);
 
   if (!objectId) {
-    return json({
-      ok: false,
-      step: "validateBody",
-      error: "objectId is required",
-      body
-    }, 400);
+    return json({ ok: false, error: "objectId is required", step: "validateBody", body }, 400);
   }
-
-  const logPayload = {
-    created_date: today,
-    object_id: objectId,
-    object_name: objectName || null,
-    executor: executor,
-    executor_comment: comment || null
-  };
 
   const insertLogRes = await sbFetch(env, "visits_log", {
     method: "POST",
     headers: {
       Prefer: "return=representation"
     },
-    body: JSON.stringify([logPayload])
+    body: JSON.stringify([
+      {
+        created_date: today,
+        object_id: objectId,
+        object_name: objectName || null,
+        executor,
+        executor_comment: comment || null
+      }
+    ])
   });
 
   if (!insertLogRes.ok) {
     return json({
       ok: false,
       step: "insertLogRes",
-      payload: logPayload,
       error: insertLogRes.data
     }, 500);
   }
@@ -65,8 +55,7 @@ export async function onRequestPost({ request, env }) {
     return json({
       ok: false,
       step: "findPlanRes",
-      error: findPlanRes.data,
-      insertedLog: insertLogRes.data?.[0] || null
+      error: findPlanRes.data
     }, 500);
   }
 
@@ -77,14 +66,9 @@ export async function onRequestPost({ request, env }) {
       ok: true,
       warning: "Visit saved to log, but no active plan row found",
       step: "noPlanRow",
-      insertedLog: insertLogRes.data?.[0] || null
+      log: insertLogRes.data?.[0] || null
     });
   }
-
-  const updatePayload = {
-    status: "Выполнено",
-    done_date: today
-  };
 
   const updatePlanRes = await sbFetch(
     env,
@@ -94,7 +78,10 @@ export async function onRequestPost({ request, env }) {
       headers: {
         Prefer: "return=representation"
       },
-      body: JSON.stringify(updatePayload)
+      body: JSON.stringify({
+        status: "Выполнено",
+        done_date: today
+      })
     }
   );
 
@@ -103,9 +90,7 @@ export async function onRequestPost({ request, env }) {
       ok: false,
       step: "updatePlanRes",
       error: updatePlanRes.data,
-      planRow,
-      updatePayload,
-      insertedLog: insertLogRes.data?.[0] || null
+      planRow
     }, 500);
   }
 
