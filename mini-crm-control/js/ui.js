@@ -411,8 +411,9 @@ async function loadAndRenderRequests() {
 
 function renderRequestsTable(rows) {
   const wrap = document.getElementById("requestsTable");
-  console.log("renderRequestsTable wrap:", wrap);
-  console.log("renderRequestsTable rows:", rows);
+  console.log("render rows raw:", rows);
+  console.log("first row:", rows?.[0]);
+
 
   if (!wrap) return;
 
