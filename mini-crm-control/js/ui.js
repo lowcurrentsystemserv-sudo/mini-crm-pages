@@ -410,7 +410,7 @@ async function loadAndRenderRequests() {
 }
 
 function renderRequestsTable(rows) {
-  const wrap = document.getElementById("dispatcher_requests_table");
+  const wrap = document.getElementById("requestsTable");
   if (!wrap) return;
 
   const safeRows = Array.isArray(rows) ? rows : [];
