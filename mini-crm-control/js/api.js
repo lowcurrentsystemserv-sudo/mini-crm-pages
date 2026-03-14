@@ -87,6 +87,11 @@ export const api = {
     return await httpPost("/requests-update", { requestId, patch });
   },
 
+  objectsSearchDispatcher: async (q, limit = 20) => {
+    const r = await httpGet(`/objects-search-dispatcher?q=${encodeURIComponent(q)}&limit=${limit}`);
+    return { items: Array.isArray(r.items) ? r.items : [] };
+  },
+
   executorSummary: () => httpGet("/executor-summary"),
 
   suggestWorkType: (objectId) => httpPost("/suggest-work-type", { objectId }),
