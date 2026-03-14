@@ -60,6 +60,55 @@ body[data-viewport="desktop-wide"]{
   --login-max: 470px;
 }
 
+.requests-mobile {
+  display: none;
+}
+
+.request-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.request-card__title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.request-card__meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.request-card__desc {
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+}
+
+.request-card__row {
+  margin-bottom: 6px;
+}
+
+.request-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .requests-desktop {
+    display: none;
+  }
+
+  .requests-mobile {
+    display: block;
+  }
+}
+
 
 .topbar{
   position: sticky;
