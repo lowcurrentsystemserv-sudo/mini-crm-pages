@@ -515,13 +515,6 @@ function renderRequestsTable(rows) {
   });
 }
 
-function formatDateOnly(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleDateString("ru-RU");
-}
-
 function slugify(v) {
   return String(v || "")
     .toLowerCase()
@@ -530,14 +523,6 @@ function slugify(v) {
     .replace(/[^a-zа-яё0-9_-]/gi, "");
 }
 
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 function formatDateOnly(value) {
   if (!value) return "";
@@ -546,13 +531,6 @@ function formatDateOnly(value) {
   return d.toLocaleDateString("ru-RU");
 }
 
-function slugify(v) {
-  return String(v || "")
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zа-яё0-9_-]/gi, "");
-}
 
 function escapeHtml(str) {
   return String(str ?? "")
