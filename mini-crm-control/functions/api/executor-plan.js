@@ -1,51 +1,58 @@
-function decodeBase64Url(str) {
-  str = str.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = str.length % 4;
-  if (pad) str += "=".repeat(4 - pad);
-  const bin = atob(str);
-  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
-
-function getSid(request) {
-  const cookie = request.headers.get("Cookie") || "";
-  const m = cookie.match(/sid=([^;]+)/);
-  return m ? m[1] : null;
-}
-
-async function getSession(request) {
-  const sid = getSid(request);
-  if (!sid) return null;
-  try {
-    const session = JSON.parse(decodeBase64Url(sid));
-    if (session.exp < Date.now()) return null;
-    return session;
-  } catch {
-    return null;
-  }
-}
+import { json, sbFetch } from "../_lib/supabase.js";
+import { requireSession } from "../_lib/session.js";
 
 export async function onRequestGet({ request, env }) {
-  const session = await getSession(request);
-  if (!session) {
-    return new Response(JSON.stringify({ ok:false, error:"Not authenticated" }), {
-      status: 401,
-      headers: { "Content-Type":"application/json; charset=utf-8" }
-    });
+  const session = await requireSession(request);
+  if (!session.ok) return session.resp;
+
+  const executor = session.session.name;
+
+  const planRes = await sbFetch(
+    env,
+    `visit_plan?select=id,plan_date,object_id,object_name,executor,status,done_date,dispatcher_text,work_type&executor=eq.${encodeURIComponent(executor)}&status=neq.Выполнено&order=plan_date.asc`
+  );
+
+  if (!planRes.ok) {
+    return json({ ok: false, error: planRes.data, step: "planRes" }, 500);
   }
 
-  const r = await fetch(env.GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type":"application/x-www-form-urlencoded;charset=UTF-8" },
-    body: new URLSearchParams({
-      action: "executor_plan",
-      userName: session.name
-    })
+  const planRows = planRes.data || [];
+  const objectIds = [...new Set(planRows.map(r => r.object_id).filter(Boolean))];
+
+  let objectsMap = {};
+
+  if (objectIds.length > 0) {
+    const idsFilter = objectIds.join(",");
+    const objRes = await sbFetch(
+      env,
+      `objects?select=id,city,address,group_name,system&id=in.(${idsFilter})`
+    );
+
+    if (!objRes.ok) {
+      return json({ ok: false, error: objRes.data, step: "objRes" }, 500);
+    }
+
+    objectsMap = Object.fromEntries((objRes.data || []).map(o => [o.id, o]));
+  }
+
+  const rows = planRows.map(r => {
+    const extra = objectsMap[r.object_id] || {};
+
+    return {
+      date: r.plan_date || "",
+      objectId: r.object_id || "",
+      object: r.object_name || "",
+      executor: r.executor || "",
+      status: r.status || "",
+      doneDate: r.done_date || "",
+      description: r.dispatcher_text || "",
+      workType: r.work_type || "",
+      city: extra.city || "",
+      address: extra.address || "",
+      group: extra.group_name || "",
+      system: extra.system || ""
+    };
   });
 
-  const text = await r.text();
-  return new Response(text, {
-    status: r.status,
-    headers: { "Content-Type":"application/json; charset=utf-8" }
-  });
+  return json({ ok: true, rows });
 }
