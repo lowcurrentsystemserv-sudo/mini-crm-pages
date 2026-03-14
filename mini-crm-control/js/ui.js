@@ -875,6 +875,11 @@ export function openRequestModalCreate() {
     }
   });
 
+  console.log("modal html ready");
+  console.log("req_object_search:", document.getElementById("req_object_search"));
+  console.log("req_search_results:", document.getElementById("req_search_results"));
+  console.log("req_object_label:", document.getElementById("req_object_label"));
+
   state.requestSelectedObject = null;
 
   const els = {
