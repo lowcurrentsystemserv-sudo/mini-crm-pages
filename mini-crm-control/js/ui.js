@@ -815,61 +815,107 @@ function closeModal() {
 }
 
 /* ===== Request modals ===== */
-async function openRequestModalCreate() {
-  await ensureObjectsLoaded();
-  const options = state.objects
-    .filter(o => o.active !== false)
-    .map(o => `<option value="${escAttr(o.objectId)}">${esc(o.name)} — ${esc(o.city)}, ${esc(o.address)}</option>`)
-    .join("");
+export function openRequestModalCreate() {
+  openModal("Новая заявка", `
+    <div class="form-grid">
+      <label>Поиск объекта</label>
+      <input id="req_object_search" type="text" placeholder="Введите название, адрес, город..." />
+      <div id="req_search_results" class="search-results"></div>
 
-  openModal({
-    title: "Новая заявка (Requests)",
-    bodyHtml: `
-      <label class="label">Объект</label>
-      <select id="m_objectId" class="input">${options}</select>
+      <label>Выбранный объект</label>
+      <input id="req_object_label" type="text" readonly placeholder="Объект не выбран" />
 
-      <label class="label">Описание</label>
-      <textarea id="m_desc" class="textarea" placeholder="Описание заявки"></textarea>
+      <label>Описание</label>
+      <textarea id="req_desc" rows="4" placeholder="Опишите проблему"></textarea>
 
-      <label class="label">Срочность</label>
-      <select id="m_urg" class="input">
-        <option>Низкая</option>
-        <option selected>Средняя</option>
-        <option>Высокая</option>
+      <label>Срочность</label>
+      <select id="req_urgency">
+        <option value="Низкая">Низкая</option>
+        <option value="Средняя" selected>Средняя</option>
+        <option value="Срочная">Срочная</option>
       </select>
 
-      <label class="label">Статус</label>
-      <select id="m_status" class="input">
-        <option selected>Новая</option>
-        <option>В работе</option>
-        <option>Ожидает</option>
-        <option>Выполнена</option>
-      </select>
+      <label>Исполнитель</label>
+      <input id="req_executor" type="text" placeholder="Необязательно" />
+    </div>
+  `, async () => {
+    const selected = state.requestSelectedObject;
+    const description = document.getElementById("req_desc").value.trim();
+    const urgency = document.getElementById("req_urgency").value;
+    const executor = document.getElementById("req_executor").value.trim();
 
-      <label class="label">Принял вызов</label>
-      <input id="m_acc" class="input" placeholder="Имя диспетчера" value="${escAttr(state.user?.name || "")}"/>
+    if (!selected?.objectId) {
+      alert("Выберите объект");
+      return false;
+    }
 
-      <label class="label">Исполнитель</label>
-      <input id="m_exec" class="input" placeholder="Имя исполнителя" />
-    `,
-    onOk: async () => {
-      const objectId = document.getElementById("m_objectId").value;
-      const obj = state.objectsMap[objectId];
+    if (!description) {
+      alert("Введите описание заявки");
+      return false;
+    }
+
+    try {
       await api.requestsCreate({
-        objectId,
-        objectName: obj?.name || "",
-        description: document.getElementById("m_desc").value || "",
-        urgency: document.getElementById("m_urg").value || "Средняя",
-        status: document.getElementById("m_status").value || "Новая",
-        acceptedBy: document.getElementById("m_acc").value || "",
-        executor: document.getElementById("m_exec").value || "",
+        objectId: Number(selected.objectId),
+        objectName: selected.name,
+        description,
+        urgency,
+        status: "Новая",
+        acceptedBy: state.user?.name || "",
+        executor
       });
-      toast("Заявка создана");
-      await loadAndRenderRequests();
+
+      state.requestSelectedObject = null;
+      await openDispatcherRequests();
+      return true;
+    } catch (e) {
+      console.error("requestsCreate error:", e);
+      alert("Не удалось создать заявку");
+      return false;
     }
   });
-}
 
+  state.requestSelectedObject = null;
+
+  const els = {
+    search: document.getElementById("req_object_search"),
+    results: document.getElementById("req_search_results"),
+    label: document.getElementById("req_object_label")
+  };
+
+  let searchToken = 0;
+
+  els.search.oninput = debounce(async () => {
+    const text = els.search.value.trim();
+    els.results.innerHTML = "";
+    if (!text) return;
+
+    const token = ++searchToken;
+
+    let items = [];
+    try {
+      const res = await api.objectsSearchDispatcher(text, 25);
+      if (token !== searchToken) return;
+      items = Array.isArray(res.items) ? res.items : [];
+    } catch (e) {
+      console.error("objectsSearchDispatcher error:", e);
+      return;
+    }
+
+    for (const o of items) {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.textContent = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
+      div.addEventListener("click", () => {
+        state.requestSelectedObject = o;
+        els.label.value = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
+        els.search.value = "";
+        els.results.innerHTML = "";
+      });
+      els.results.appendChild(div);
+    }
+  }, 250);
+}
 function openRequestModalEdit(req) {
   openModal({
     title: `Редактировать заявку ${req.requestId}`,
