@@ -423,8 +423,8 @@ function renderRequestsTable(rows) {
     return;
   }
 
-  const desktopTable = `
-    <div class="table-wrap requests-desktop">
+  const desktopTableHtml = `
+    <div class="requests-desktop">
       <table class="data-table requests-table">
         <thead>
           <tr>
@@ -467,7 +467,7 @@ function renderRequestsTable(rows) {
     </div>
   `;
 
-  const mobileCards = `
+  const mobileCardsHtml = `
     <div class="requests-mobile">
       ${safeRows.map(r => `
         <div class="request-card" data-request-id="${r.requestId}">
@@ -493,7 +493,7 @@ function renderRequestsTable(rows) {
     </div>
   `;
 
-  wrap.innerHTML = desktopTable + mobileCards;
+  wrap.innerHTML = desktopTableHtml + mobileCardsHtml;
 
   wrap.querySelectorAll("[data-action='edit']").forEach(btn => {
     btn.onclick = () => {
