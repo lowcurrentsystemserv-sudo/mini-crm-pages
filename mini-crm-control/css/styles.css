@@ -60,10 +60,6 @@ body[data-viewport="desktop-wide"]{
   --login-max: 470px;
 }
 
-.requests-mobile {
-  display: none;
-}
-
 .request-card {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -100,10 +96,14 @@ body[data-viewport="desktop-wide"]{
 }
 
 .requests-desktop {
-  display: block;
+  display: block !important;
 }
 
-@media (max-width: 768px) {
+.requests-mobile {
+  display: none !important;
+}
+
+@media screen and (max-width: 768px) {
   .requests-desktop {
     display: none !important;
   }
@@ -112,6 +112,7 @@ body[data-viewport="desktop-wide"]{
     display: block !important;
   }
 }
+
 
 
 
