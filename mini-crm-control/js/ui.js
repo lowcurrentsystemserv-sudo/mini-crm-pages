@@ -410,63 +410,102 @@ async function loadAndRenderRequests() {
 }
 
 function renderRequestsTable(rows) {
-  const r = Array.isArray(rows) ? rows : [];
-  if (!r.length) return `<div class="muted" style="padding:12px;">Нет данных</div>`;
+  const wrap = document.getElementById("dispatcher_requests_table");
+  if (!wrap) return;
 
-  const tr = r.map(x => {
-    const obj = state.objectsMap[x.objectId];
-    const objLabel = obj ? `${obj.name} — ${obj.city}, ${obj.address}` : (x.objectName || x.objectId);
-    const created = x.createdAt ? new Date(x.createdAt).toLocaleString() : (x.createdAt || "");
-    return `<tr>
-      <td>${esc(x.requestId || "")}</td>
-      <td>${esc(created)}</td>
-      <td>${esc(objLabel)}</td>
-      <td>${esc(x.urgency || "")}</td>
-      <td>${esc(x.status || "")}</td>
-      <td>${esc(x.acceptedBy || "")}</td>
-      <td>${esc(x.executor || "")}</td>
-      <td>
-        <button class="btn btn-secondary" data-action="edit" data-id="${escAttr(x.requestId)}">Редактировать</button>
-        <button class="btn btn-primary" data-action="toplan" data-id="${escAttr(x.requestId)}">В план</button>
-      </td>
-    </tr>`;
-  }).join("");
+  const safeRows = Array.isArray(rows) ? rows : [];
 
-  const html = `
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Дата поступления</th>
-          <th>Объект</th>
-          <th>Срочность</th>
-          <th>Статус</th>
-          <th>Принял вызов</th>
-          <th>Исполнитель</th>
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody>${tr}</tbody>
-    </table>
+  if (!safeRows.length) {
+    wrap.innerHTML = `<div class="empty">Заявок пока нет</div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table requests-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Объект</th>
+            <th>Описание</th>
+            <th>Срочность</th>
+            <th>Статус</th>
+            <th>Исполнитель</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${safeRows.map(r => `
+            <tr data-request-id="${r.requestId}">
+              <td>${escapeHtml(formatDateOnly(r.createdAt || ""))}</td>
+              <td class="req-object-cell">
+                <div class="req-object-name">${escapeHtml(r.objectName || "—")}</div>
+              </td>
+              <td class="req-desc-cell">${escapeHtml(r.description || "—")}</td>
+              <td>
+                <span class="badge urgency-${slugify(r.urgency || "none")}">
+                  ${escapeHtml(r.urgency || "—")}
+                </span>
+              </td>
+              <td>
+                <span class="badge status-${slugify(r.status || "none")}">
+                  ${escapeHtml(r.status || "—")}
+                </span>
+              </td>
+              <td>${escapeHtml(r.executor || "—")}</td>
+              <td class="actions-cell">
+                <button class="btn small" data-action="edit" data-id="${r.requestId}">Открыть</button>
+                <button class="btn small primary" data-action="plan" data-id="${r.requestId}">В план</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
   `;
 
-  // attach events after render
-  setTimeout(() => {
-    const root = els.requestsTable;
-    root.querySelectorAll("button[data-action]").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-id");
-        const action = btn.getAttribute("data-action");
-        const req = state.requests.find(z => z.requestId === id);
-        if (!req) return;
+  wrap.querySelectorAll("[data-action='edit']").forEach(btn => {
+    btn.onclick = () => {
+      const id = String(btn.dataset.id || "");
+      const row = safeRows.find(x => String(x.requestId) === id);
+      if (row) openRequestModalEdit(row);
+    };
+  });
 
-        if (action === "edit") openRequestModalEdit(req);
-        if (action === "toplan") await createPlanFromRequest(req);
-      });
-    });
-  }, 0);
+  wrap.querySelectorAll("[data-action='plan']").forEach(btn => {
+    btn.onclick = () => {
+      const id = String(btn.dataset.id || "");
+      const row = safeRows.find(x => String(x.requestId) === id);
+      if (row) {
+        console.log("plan from request", row);
+        alert("Следующим шагом подключим перевод заявки в план");
+      }
+    };
+  });
+}
 
-  return html;
+function formatDateOnly(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString("ru-RU");
+}
+
+function slugify(v) {
+  return String(v || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zа-яё0-9_-]/gi, "");
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 async function createPlanFromRequest(req) {
