@@ -191,12 +191,30 @@ function hideAllViews() {
   Object.values(views).forEach(v => v.style.display = "none");
 }
 
+let currentViewKey = null;
+let isSwitchingView = false;
+
 export function openView(key, title, hint) {
+  if (isSwitchingView) return;
+  if (currentViewKey === key) return;
+
+  isSwitchingView = true;
+
   hideAllViews();
-  views[key].style.display = "block";
-  els.contentTitle.textContent = title;
+  if (views[key]) {
+    views[key].style.display = "block";
+  }
+
+  els.contentTitle.textContent = title || "";
   els.contentHint.textContent = hint || "";
+
+  currentViewKey = key;
+
+  requestAnimationFrame(() => {
+    isSwitchingView = false;
+  });
 }
+
 
 export function buildNav() {
   const role = state.user?.role;
@@ -384,20 +402,36 @@ export async function openMasterMyVisits() {
 }
 
 /* ===== Dispatcher: Requests ===== */
+let requestsHandlersBound = false;
+
 export async function openDispatcherRequests() {
   openView("dispatcherRequests", "Заявки", "Создание/редактирование заявок.");
 
   await loadAndRenderRequests();
 
-  const btnCreate = document.getElementById("btnCreateRequest");
-  const btnReload = document.getElementById("btnReloadRequests");
-  if (btnCreate) btnCreate.onclick = () => openRequestModalCreate();
-  if (btnReload) btnReload.onclick = () => loadAndRenderRequests();
+  if (!requestsHandlersBound) {
+    const btnCreate = document.getElementById("btnCreateRequest");
+    const btnReload = document.getElementById("btnReloadRequests");
 
-  if (els.reqStatusFilter) els.reqStatusFilter.onchange = () => loadAndRenderRequests();
-  if (els.reqExecutorFilter) els.reqExecutorFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
-  if (els.reqSearchFilter) els.reqSearchFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
+    if (btnCreate) btnCreate.onclick = () => openRequestModalCreate();
+    if (btnReload) btnReload.onclick = () => loadAndRenderRequests();
+
+    if (els.reqStatusFilter) {
+      els.reqStatusFilter.onchange = () => loadAndRenderRequests();
+    }
+
+    if (els.reqExecutorFilter) {
+      els.reqExecutorFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
+    }
+
+    if (els.reqSearchFilter) {
+      els.reqSearchFilter.oninput = debounce(() => loadAndRenderRequests(), 250);
+    }
+
+    requestsHandlersBound = true;
+  }
 }
+
 
 
 async function loadAndRenderRequests() {
