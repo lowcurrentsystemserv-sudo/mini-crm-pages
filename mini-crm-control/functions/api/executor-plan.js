@@ -9,11 +9,15 @@ export async function onRequestGet({ request, env }) {
 
   const planRes = await sbFetch(
     env,
-    `visit_plan?select=id,plan_date,object_id,object_name,executor,status,done_date,dispatcher_text,work_type&executor=eq.${encodeURIComponent(executor)}&status=neq.Выполнено&order=plan_date.asc`
+    `visit_plan?select=id,plan_date,object_id,object_name,executor,status,done_date,dispatcher_text,work_type&executor=eq.${encodeURIComponent(executor)}&or=(status.neq.Выполнено,status.is.null)&order=plan_date.asc`
   );
 
   if (!planRes.ok) {
-    return json({ ok: false, error: planRes.data, step: "planRes" }, 500);
+    return json({
+      ok: false,
+      step: "planRes",
+      error: planRes.data
+    }, 500);
   }
 
   const planRows = planRes.data || [];
@@ -29,7 +33,11 @@ export async function onRequestGet({ request, env }) {
     );
 
     if (!objRes.ok) {
-      return json({ ok: false, error: objRes.data, step: "objRes" }, 500);
+      return json({
+        ok: false,
+        step: "objRes",
+        error: objRes.data
+      }, 500);
     }
 
     objectsMap = Object.fromEntries((objRes.data || []).map(o => [o.id, o]));
