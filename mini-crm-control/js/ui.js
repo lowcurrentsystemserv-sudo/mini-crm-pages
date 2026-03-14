@@ -349,29 +349,35 @@ export async function openMasterVisit() {
   els.dispatcherNote.style.display = "none";
   els.visitComment.value = "";
 
-  // search across active objects
-  const activeObjects = state.objects.filter(o => o.active !== false);
-  state.plannedObjects = activeObjects;
+  let searchToken = 0;
 
-  els.objectSearch.oninput = () => {
-    const text = els.objectSearch.value.trim().toLowerCase();
+  els.objectSearch.oninput = debounce(async () => {
+    const text = els.objectSearch.value.trim();
     els.searchResults.innerHTML = "";
     if (!text) return;
 
-    const items = state.plannedObjects
-      .filter(o => `${o.name} ${o.city} ${o.address} ${o.system} ${o.category} ${o.group}`.toLowerCase().includes(text))
-      .slice(0, 25);
+    const token = ++searchToken;
+
+    let items = [];
+    try {
+      const res = await api.objectsSearch(text, 25);
+      if (token !== searchToken) return;
+      items = Array.isArray(res.items) ? res.items : [];
+    } catch (e) {
+      console.error("objectsSearch error:", e);
+      return;
+    }
 
     for (const o of items) {
       const div = document.createElement("div");
       div.className = "item";
-      div.textContent = `${o.name} — ${o.city}, ${o.address}`;
+      div.textContent = `${o.name} — ${o.city || "-"}, ${o.address || "-"}`;
       div.addEventListener("click", () => {
         state.selectedObject = o;
         els.objectSearch.value = div.textContent;
         els.searchResults.innerHTML = "";
         els.dispatcherNote.style.display = "block";
-        
+
         els.dispatcherNote.innerHTML = `
         <b>Система:</b> ${o.system || "-"} • 
         <b>Категория:</b> ${o.category || "-"} • 
@@ -385,7 +391,7 @@ export async function openMasterVisit() {
       });
       els.searchResults.appendChild(div);
     }
-  };
+  }, 250);
 }
 
 export async function submitVisit() {
