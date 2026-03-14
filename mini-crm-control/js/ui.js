@@ -966,8 +966,11 @@ async function openRequestModalCreate() {
     bodyHtml: `
       <div class="form-grid">
         <label class="label">Поиск объекта</label>
-        <input id="req_object_search" class="input" type="text" placeholder="Введите название, адрес, город..." />
-        <div id="req_search_results" class="search-results"></div>
+        <div class="search-field">
+          <input id="req_object_search" class="input" type="text" placeholder="Введите название, адрес, город..." />
+          <div id="req_search_results" class="search-results"></div>
+        </div>
+
 
         <label class="label">Выбранный объект</label>
         <input id="req_object_label" class="input" type="text" readonly placeholder="Объект не выбран" />
